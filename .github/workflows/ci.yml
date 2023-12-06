@@ -1,0 +1,137 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build-docker:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - container: wpilib/roborio-cross-ubuntu:2023-22.04
+            artifact-name: Athena
+            build-options: "-Ponlylinuxathena"
+            platform: linuxathena
+          # - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
+          #   artifact-name: Arm32
+          #   build-options: "-Ponlylinuxarm32"
+          # - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
+          #   artifact-name: Arm64
+          #   build-options: "-Ponlylinuxarm64"
+          - container: wpilib/ubuntu-base:22.04
+            artifact-name: Linux
+            build-options: ""
+            platform: "linuxx86-64"
+    name: "Build - ${{ matrix.artifact-name }}"
+    runs-on: ubuntu-latest
+    container: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Fetch all history and metadata
+        run: |
+          git config --global --add safe.directory /__w/libgrapplefrc/libgrapplefrc
+          git fetch --prune --unshallow
+      - name: Setup Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+      - name: Setup Rust Toolchain (Athena)
+        run: rustup target add arm-unknown-linux-gnueabi
+      - name: Install Clang
+        run: apt-get update && apt-get install -y libclang1-15 clang llvm gcc-multilib
+      - name: Prepare Rust Libs
+        run: ./gradlew updateRustLibs --max-workers 1 ${{ matrix.build-options }}
+      - name: Build Rust
+        run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
+      - name: Build with Gradle
+        run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal --max-workers 1 ${{ matrix.build-options }}
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: /__w/libgrapplefrc/libgrapplefrc/build/maven
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}-Driver
+          path: grapplefrcdriver/target/zips
+
+  build-host:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2019
+            artifact-name: Win64
+            architecture: x64
+            platform: windowsx86-64
+          # - os: macos-11
+          #   artifact-name: macOS
+          #   architecture: x64
+          #   platform: osxuniversal
+    name: "Build - ${{ matrix.artifact-name }}"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Fetch all history and metadata
+        run: git fetch --prune --unshallow
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          architecture: ${{ matrix.architecture }}
+      - name: Setup Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+      - name: Prepare Rust Libs
+        run: ./gradlew updateRustLibs --max-workers 1
+      - name: Build Rust
+        run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
+      - name: Build with Gradle
+        run: ./gradlew publishToMavenLocal -Pbuildalldesktop
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ~/.m2/repository
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}-Driver
+          path: grapplefrcdriver/target/zips
+
+  combine:
+    name: Combine
+    needs: [build-docker, build-host]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/download-artifact@v3
+        with:
+          path: combiner/products/m2
+      - name: Flatten Artifacts
+        run: rsync -a --delete combiner/products/m2/*/* combiner/products/out/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Maven
+          path: combiner/products/out/
+      - uses: 'google-github-actions/auth@v2'
+        if: github.repository_owner == 'GrappleRobotics' && github.ref == 'refs/heads/master'
+        with:
+          project_id: "grapple-frc"
+          credentials_json: ${{ secrets.GCP_SVC_ACCT }}
+      - uses: 'google-github-actions/upload-cloud-storage@v1'
+        if: github.repository_owner == 'GrappleRobotics' && github.ref == 'refs/heads/master'
+        with:
+          path: "combiner/products/out/"
+          destination: "grapple-frc-maven"
+          parent: false
+      - uses: 'google-github-actions/upload-cloud-storage@v1'
+        if: github.repository_owner == 'GrappleRobotics' && github.ref == 'refs/heads/master'
+        with:
+          path: "depjson"
+          destination: "grapple-frc-maven"
+          parent: false

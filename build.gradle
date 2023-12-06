@@ -1,0 +1,153 @@
+plugins {
+  id 'cpp'
+  id 'java'
+  id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
+  id 'edu.wpi.first.NativeUtils' version '2023.11.1'
+  id 'edu.wpi.first.GradleJni' version '1.0.0'
+  id 'edu.wpi.first.GradleVsCode' version '1.3.0'
+}
+
+repositories {
+  mavenCentral()
+  maven {
+    url = uri("${project.getRootDir()}/grapplefrcdriver/target/zips")
+  }
+}
+if (project.hasProperty('releaseMode')) {
+  wpilibRepositories.addAllReleaseRepositories(project)
+} else {
+  wpilibRepositories.addAllDevelopmentRepositories(project)
+}
+
+// Apply C++ configuration
+apply from: 'config.gradle'
+
+// Apply Java configuration
+dependencies {
+    implementation 'edu.wpi.first.cscore:cscore-java:2023.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2023.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2023.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2023.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2023.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2023.+'
+    // implementation 'edu.wpi.first.wpiunits:wpiunits-java:2023.+'
+    implementation 'edu.wpi.first.hal:hal-java:2023.+'
+    implementation "org.ejml:ejml-simple:0.41"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.12.4"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.12.4"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.12.4"
+    implementation 'edu.wpi.first.thirdparty.frc2023.opencv:opencv-java:4.6.0-2'
+}
+
+// Set up exports properly
+nativeUtils {
+  exportsConfigs {
+    // Main library is just default empty. This will export everything
+    grapplefrc {
+    }
+  }
+
+  nativeDependencyContainer {
+    libgrapplefrcdriver(edu.wpi.first.nativeutils.dependencies.WPISharedMavenDependency) {
+      version = "2023.0.0-beta3"
+      groupId = "au.grapplerobotics"
+      artifactId = "libgrapplefrcdriver"
+      ext = "zip"
+
+      headerClassifier = "headers"
+      targetPlatforms = [
+        "windowsx86-64",
+        "windowsx86",
+        "linuxarm64",
+        "linuxx86-64",
+        "linuxathena",
+        "linuxarm32",
+        "osxuniversal"
+      ]
+    }
+  }
+}
+
+def rust_triple(targetPlatform) {
+  def triple = null;
+  if (targetPlatform.name == "linuxathena") {
+    triple = "arm-unknown-linux-gnueabi"
+  } else if (targetPlatform.operatingSystem.isWindows()) {
+    triple = "x86_64-pc-windows-msvc"
+  } else if (targetPlatform.operatingSystem.isMacOsX()) {
+    triple = "x86_64-apple-darwin"
+  } else if (targetPlatform.operatingSystem.isLinux()) {
+    triple = "x86_64-unknown-linux-gnu"
+  }
+  return triple
+}
+
+def all_binaries = []
+
+model {
+  components {
+    grapplefrc(NativeLibrarySpec) {
+      sources {
+        cpp {
+          source {
+            srcDirs 'src/main/native/cpp'
+            include '**/*.cpp'
+          }
+          exportedHeaders {
+            srcDirs 'src/main/native/include'
+          }
+        }
+      }
+      nativeUtils.useRequiredLibrary(it, 'driver_shared', 'libgrapplefrcdriver')
+      binaries.withType(NativeBinarySpec.class).all(bin -> {
+        all_binaries += bin
+      })
+    }
+  }
+}
+
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
+def fdl = new edu.wpi.first.nativeutils.dependencies.FastDownloadDependencySet("updaterustlibbins", project)
+
+task updateRustLibs() {
+  doLast {
+    nativeUtils.nativeDependencyContainer.getByName("driver_shared", libset -> {
+      for (binary in all_binaries) {
+        def resolved = libset.resolveNativeDependency(binary, fdl)
+        
+        def headers = []
+        def libs = []
+
+        resolved.getLinkFiles().forEach({ f -> libs += f })
+        resolved.getIncludeRoots().forEach({ f -> headers += f })
+
+        def triple = rust_triple(binary.targetPlatform)
+        def outdir = project.file("grapplefrcdriver/buildlibs/${triple}")
+        new File(outdir, "libs").mkdirs()
+        new File(outdir, "headers").mkdirs()
+
+        libs.forEach({ lf ->
+          copy {
+            from lf
+            into "${outdir}/libs"
+          }
+        })
+
+        headers.forEach({ hd ->
+          copy {
+            from hd
+            into "${outdir}/headers"
+          }
+        })
+      }
+    })
+  }
+}
+
+apply from: 'publish.gradle'
+
+wrapper {
+  gradleVersion '8.3'
+}

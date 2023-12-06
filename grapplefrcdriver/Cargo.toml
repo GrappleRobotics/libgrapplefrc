@@ -1,0 +1,19 @@
+[package]
+name = "grapplefrcdriver"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "grapplefrcdriver"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+anyhow = "1.0.75"
+grapple-frc-msgs = { git = "https://github.com/GrappleRobotics/frc-msgs" }
+jni = "0.21.1"
+
+[build-dependencies]
+cbindgen = "0.26.0"
+bindgen = "0.53.1"
