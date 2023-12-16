@@ -62,9 +62,7 @@ impl LaserCanDevice {
     LaserCanDevice { can_id, fragment_id: 0, last_status_frame, stop_signal: stop_tx }
   }
 
-  pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
-    let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
-
+  pub fn send_ll(&mut self, msg: Message) -> anyhow::Result<()> {
     msg.validate().map_err(|e| anyhow::anyhow!("{}", e))?;
 
     let fragments = FragmentReassembler::maybe_split(msg, self.fragment_id.wrapping_add(1));
@@ -76,6 +74,11 @@ impl LaserCanDevice {
     } else {
       Ok(())
     }
+  }
+
+  pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
+    let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
+    self.send_ll(msg)
   }
 
   pub fn status(&mut self) -> LaserCanStatusFrame {

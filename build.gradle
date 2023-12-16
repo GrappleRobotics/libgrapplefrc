@@ -49,7 +49,7 @@ nativeUtils {
 
   nativeDependencyContainer {
     libgrapplefrcdriver(edu.wpi.first.nativeutils.dependencies.WPISharedMavenDependency) {
-      version = "2023.0.0-beta3"
+      version = "2023.0.0-beta4"
       groupId = "au.grapplerobotics"
       artifactId = "libgrapplefrcdriver"
       ext = "zip"

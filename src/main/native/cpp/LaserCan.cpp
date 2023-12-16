@@ -6,6 +6,7 @@
 #include <iostream>
 
 using namespace libgrapplefrc;
+using namespace grpl;
 
 int wrap_error(int code) {
   if (code != 0) {

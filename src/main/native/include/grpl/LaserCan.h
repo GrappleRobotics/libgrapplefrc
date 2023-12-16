@@ -5,7 +5,7 @@
 #include <optional>
 #include "libgrapplefrcffi.h"
 
-namespace libgrapplefrc {
+namespace grpl {
   /**
    * Status marker for a valid measurement
   */
@@ -43,14 +43,14 @@ namespace libgrapplefrc {
   /**
    * A Measurement obtained from a LaserCAN Sensor.
   */
-  using LaserCanMeasurement = ffi::LaserCanStatusFrame;
+  using LaserCanMeasurement = libgrapplefrc::ffi::LaserCanStatusFrame;
 
   /**
    * A Region of Interest for the LaserCAN sensor. The Region of Interest is the target area
    * on which the sensor will detect objects. GrappleHook can be used to interactively set the
    * Region of Interest.
   */
-  using LaserCanROI = ffi::LaserCanRoi;
+  using LaserCanROI = libgrapplefrc::ffi::LaserCanRoi;
 
   /**
    * The Ranging Mode for the LaserCAN sensor.
@@ -118,6 +118,6 @@ namespace libgrapplefrc {
 
   private:
     uint8_t _can_id;
-    ffi::LaserCanDevice *_handle;
+    libgrapplefrc::ffi::LaserCanDevice *_handle;
   };
 };
