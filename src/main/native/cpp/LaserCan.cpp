@@ -1,4 +1,4 @@
-#include "libgrapplefrc/LaserCan.h"
+#include "grpl/LaserCan.h"
 #include "libgrapplefrcffi.h"
 
 #include <frc/Errors.h>
