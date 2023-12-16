@@ -179,23 +179,27 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_status<'local>(
   let lc = get_handle(&mut env, inst);
   let status = unsafe { (*lc).status() };
 
-  let cls = env.find_class("au/grapplerobotics/LaserCan$RegionOfInterest").unwrap();
-  let roi = env.new_object(cls, "(IIII)V", &[
-    JValueGen::Int(status.roi.x.0 as jint),
-    JValueGen::Int(status.roi.y.0 as jint),
-    JValueGen::Int(status.roi.w.0 as jint),
-    JValueGen::Int(status.roi.h.0 as jint),
-  ]).unwrap();
+  if status.status == 0xFF {
+    JObject::null().into_raw()
+  } else {
+    let cls = env.find_class("au/grapplerobotics/LaserCan$RegionOfInterest").unwrap();
+    let roi = env.new_object(cls, "(IIII)V", &[
+      JValueGen::Int(status.roi.x.0 as jint),
+      JValueGen::Int(status.roi.y.0 as jint),
+      JValueGen::Int(status.roi.w.0 as jint),
+      JValueGen::Int(status.roi.h.0 as jint),
+    ]).unwrap();
 
-  let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
-  env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
-    JValueGen::Int(status.status as jint),
-    JValueGen::Int(status.distance_mm as jint),
-    JValueGen::Int(status.ambient as jint),
-    JValueGen::Bool(status.long as jboolean),
-    JValueGen::Int(status.budget_ms as jint),
-    JValueGen::Object(&roi)
-  ]).unwrap().into_raw()
+    let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
+    env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
+      JValueGen::Int(status.status as jint),
+      JValueGen::Int(status.distance_mm as jint),
+      JValueGen::Int(status.ambient as jint),
+      JValueGen::Bool(status.long as jboolean),
+      JValueGen::Int(status.budget_ms as jint),
+      JValueGen::Object(&roi)
+    ]).unwrap().into_raw()
+  }
 }
 
 #[no_mangle]

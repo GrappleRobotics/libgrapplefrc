@@ -1,6 +1,8 @@
 #include "libgrapplefrc/LaserCan.h"
 #include "libgrapplefrcffi.h"
 
+#include <frc/Errors.h>
+
 #include <iostream>
 
 using namespace libgrapplefrc;
@@ -8,7 +10,7 @@ using namespace libgrapplefrc;
 int wrap_error(int code) {
   if (code != 0) {
     char *last_error = ffi::last_error();
-    std::cerr << "LASERCAN ERROR: " << last_error << std::endl;
+    FRC_ReportError(frc::err::Error, "LaserCAN: {}", last_error);
     ffi::free_error(last_error);
   }
   return code;
@@ -22,8 +24,13 @@ LaserCan::~LaserCan() {
   ffi::lasercan_free(_handle);
 }
 
-LaserCanMeasurement LaserCan::get_measurement() const {
-  return ffi::lasercan_get_status(_handle);
+std::optional<LaserCanMeasurement> LaserCan::get_measurement() const {
+  LaserCanMeasurement status = ffi::lasercan_get_status(_handle);
+  if (status.status != 0xFF) {
+    return status;
+  } else {
+    return std::nullopt;
+  }
 }
 
 int LaserCan::set_ranging_mode(LaserCanRangingMode mode) {

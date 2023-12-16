@@ -98,7 +98,7 @@ model {
           }
         }
       }
-      nativeUtils.useRequiredLibrary(it, 'driver_shared', 'libgrapplefrcdriver')
+      nativeUtils.useRequiredLibrary(it, 'wpilib_shared', 'libgrapplefrcdriver')
       binaries.withType(NativeBinarySpec.class).all(bin -> {
         all_binaries += bin
       })
