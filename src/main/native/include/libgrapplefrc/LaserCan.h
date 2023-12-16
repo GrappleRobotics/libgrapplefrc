@@ -5,7 +5,13 @@
 #include "libgrapplefrcffi.h"
 
 namespace libgrapplefrc {
-  using LaserCanStatus = ffi::LaserCanStatusFrame;
+  static const uint8_t LASERCAN_STATUS_VALID_MEASUREMENT = 0;
+  static const uint8_t LASERCAN_STATUS_NOISE_ISSUE = 1;
+  static const uint8_t LASERCAN_STATUS_WEAK_SIGNAL = 2;
+  static const uint8_t LASERCAN_STATUS_OUT_OF_BOUNDS = 4;
+  static const uint8_t LASERCAN_STATUS_WRAPAROUND = 7;
+
+  using LaserCanMeasurement = ffi::LaserCanStatusFrame;
   using LaserCanROI = ffi::LaserCanRoi;
 
   enum class LaserCanRangingMode {
@@ -25,7 +31,7 @@ namespace libgrapplefrc {
     LaserCan(uint8_t can_id);
     ~LaserCan();
 
-    LaserCanStatus status() const;
+    LaserCanMeasurement get_measurement() const;
     int set_ranging_mode(LaserCanRangingMode mode);
     int set_timing_budget(LaserCanTimingBudget budget);
     int set_roi(LaserCanROI roi);

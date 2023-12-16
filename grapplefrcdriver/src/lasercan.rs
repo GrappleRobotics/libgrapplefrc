@@ -187,7 +187,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_status<'local>(
     JValueGen::Int(status.roi.h.0 as jint),
   ]).unwrap();
 
-  let cls = env.find_class("au/grapplerobotics/LaserCan$Status").unwrap();
+  let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
   env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
     JValueGen::Int(status.status as jint),
     JValueGen::Int(status.distance_mm as jint),

@@ -22,7 +22,7 @@ LaserCan::~LaserCan() {
   ffi::lasercan_free(_handle);
 }
 
-LaserCanStatus LaserCan::status() const {
+LaserCanMeasurement LaserCan::get_measurement() const {
   return ffi::lasercan_get_status(_handle);
 }
 

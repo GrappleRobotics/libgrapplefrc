@@ -5,6 +5,12 @@ import java.lang.AutoCloseable;
 import java.lang.ref.Cleaner;
 
 public class LaserCan implements AutoCloseable {
+  public static final int LASERCAN_STATUS_VALID_MEASUREMENT = 0;
+  public static final int LASERCAN_STATUS_NOISE_ISSUE = 1;
+  public static final int LASERCAN_STATUS_WEAK_SIGNAL = 2;
+  public static final int LASERCAN_STATUS_OUT_OF_BOUNDS = 4;
+  public static final int LASERCAN_STATUS_WRAPAROUND = 7;
+
   public static class RegionOfInterest {
     public int x, y;
     public int w, h;
@@ -17,7 +23,7 @@ public class LaserCan implements AutoCloseable {
     }
   }
   
-  public static class Status {
+  public static class Measurement {
     public int status;
     public int distance_mm;
     public int ambient;
@@ -25,7 +31,7 @@ public class LaserCan implements AutoCloseable {
     public int budget_ms;
     public RegionOfInterest roi;
 
-    public Status(int status, int distance_mm, int ambient, boolean is_long, int budget_ms, RegionOfInterest roi) {
+    public Measurement(int status, int distance_mm, int ambient, boolean is_long, int budget_ms, RegionOfInterest roi) {
       this.status = status;
       this.distance_mm = distance_mm;
       this.ambient = ambient;
@@ -78,7 +84,7 @@ public class LaserCan implements AutoCloseable {
     this.cleanable = GrappleJNI.cleaner.register(this, this.handle);
   }
 
-  public native Status status();
+  public native Measurement getMeasurement();
 
   public void setRangingMode(RangingMode mode) {
     setRangingMode(mode == RangingMode.LONG);
