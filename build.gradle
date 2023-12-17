@@ -119,6 +119,7 @@ import java.nio.file.StandardCopyOption;
 task updateRustLibs() {
   doLast {
     nativeUtils.nativeDependencyContainer.getByName("driver_shared", libset -> {
+      // Defaulting to release
       def buildType = nativeUtils.buildTypes.named('release').get()
       for (targetPlatform in nativeUtils.platforms) {
         def resolved = libset.resolveNativeDependency(targetPlatform, buildType, java.util.Optional.empty()).get()
