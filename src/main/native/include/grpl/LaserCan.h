@@ -120,4 +120,4 @@ namespace grpl {
     uint8_t _can_id;
     libgrapplefrc::ffi::LaserCanDevice *_handle;
   };
-};
+}
