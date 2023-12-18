@@ -23,6 +23,10 @@ TRIPLE_LOOKUP = {
     'triple': "x86_64-pc-windows-msvc",
     'path': 'windows/x86-64'
   },
+  ("windowsarm64"): {
+    'triple': "aarch64-pc-windows-msvc",
+    'path': 'windows/arm64'
+  },
   ("osxuniversal"): {
     'triple': "x86_64-apple-darwin",
     'path': 'osx/universal'
