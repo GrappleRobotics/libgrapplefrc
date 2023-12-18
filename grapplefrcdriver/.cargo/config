@@ -1,6 +1,6 @@
 [target.arm-unknown-linux-gnueabi]
-linker = "arm-frc2023-linux-gnueabi-gcc"
-ar = "arm-frc2023-linux-gnueabi-ar"
+linker = "arm-frc2024-linux-gnueabi-gcc"
+ar = "arm-frc2024-linux-gnueabi-ar"
 rustflags = [
   "-C", "target-cpu=cortex-a9"
 ]
