@@ -151,7 +151,7 @@ task updateRustLibs() {
 
         if (targetPlatform.name == "osxuniversal") {
           // 2nd copy needed for arm
-        def outdir = project.file("grapplefrcdriver/buildlibs/aarch64-apple-darwin")
+          outdir = project.file("grapplefrcdriver/buildlibs/aarch64-apple-darwin")
           new File(outdir, "libs").mkdirs()
           new File(outdir, "headers").mkdirs()
 
