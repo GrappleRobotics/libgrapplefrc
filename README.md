@@ -3,7 +3,7 @@
 libgrapplefrc is the RoboRIO library for Grapple devices.
 
 ## Installing
-If you wish to use libgrapplefrc, use "Manage Vendor Libraries" in VSCode to install from URL https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2023.json.
+If you wish to use libgrapplefrc, use "Manage Vendor Libraries" in VSCode to install from URL https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2024.json.
 
 ## Layout
 This project is modelled off WPILib's vendor template, with some key differences. The project is split into three components:
