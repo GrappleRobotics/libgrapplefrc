@@ -86,6 +86,9 @@ jobs:
         uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: stable
+      - name: Setup Rust Toolchain (macOS Arm64)
+        run: rustup target add aarch64-apple-darwin
+        if: matrix.artifact-name == 'macOS'
       - name: Prepare Rust Libs
         run: ./gradlew updateRustLibs --max-workers 1
       - name: Build Rust
