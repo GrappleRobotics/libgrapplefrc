@@ -6,7 +6,7 @@ import zipfile
 NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2023/roborio/bin")
 
 # TODO: Load from cargo metadata
-VERSION = "2023.0.0-beta4"
+VERSION = "2024.0.0-beta1"
 
 def run(*cmd):
   env = os.environ.copy()
