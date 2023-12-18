@@ -65,10 +65,10 @@ jobs:
             artifact-name: Win64
             architecture: x64
             platform: windowsx86-64
-          # - os: macos-11
-          #   artifact-name: macOS
-          #   architecture: x64
-          #   platform: osxuniversal
+          - os: macos-11
+            artifact-name: macOS
+            architecture: x64
+            platform: osxuniversal
     name: "Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
