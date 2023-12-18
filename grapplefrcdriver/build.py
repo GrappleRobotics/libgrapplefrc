@@ -44,6 +44,23 @@ def build(platform):
   run("cargo", "build", "--target={}".format(triple))
   run("cargo", "build", "--release", "--target={}".format(triple))
 
+  # OSX builds universal by building both and then merging
+  if triple == "osxuniversal":
+    run("cargo", "build", "--target=aarch64-apple-darwin")
+    run("cargo", "build", "--release", "--target=aarch64-apple-darwin")
+
+    univeral_dir = f"target/osxuniversal"
+    for mode in ["debug", "release"]:
+      mode_dir = f"target/osxuniversal/{mode}"
+      try:
+        os.makedirs(mode_dir)
+      except FileExistsError:
+        pass
+      output_file = f"{mode_dir}/libgrapplefrcdriver.dylib"
+      intel_file = f"target/{triple}/{mode}/libgrapplefrcdriver.dylib"
+      arm_file = f"target/aarch64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
+      run("lipo", "-create", "-output", output_file, intel_file, arm_file)
+
   # Zip it up for maven
   package = "au/grapplerobotics"
   identifier = "libgrapplefrcdriver"

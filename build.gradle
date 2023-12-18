@@ -78,10 +78,8 @@ def rust_triple(targetPlatform) {
     return "aarch64-unknown-linux-gnu"
   } else if (platformName == "linuxx86-64") {
     return "x86_64-unknown-linux-gnu"
-  } else if (platformName == "osxx86-64") {
+  } else if (platformName == "osxuniversal") {
     return "x86_64-apple-darwin"
-  } else if (platformName == "osxarm64") {
-    return "aarch64-apple-darwin"
   } else if (platformName == "windowsx86-64") {
     return "x86_64-pc-windows-msvc"
   } else if (platformName == "windowsarm64") {
@@ -150,6 +148,27 @@ task updateRustLibs() {
             into "${outdir}/headers"
           }
         })
+
+        if (targetPlatform.name == "osxuniversal") {
+          // 2nd copy needed for arm
+        def outdir = project.file("grapplefrcdriver/buildlibs/aarch64-apple-darwin")
+          new File(outdir, "libs").mkdirs()
+          new File(outdir, "headers").mkdirs()
+
+          libs.forEach({ lf ->
+            copy {
+              from lf
+              into "${outdir}/libs"
+            }
+          })
+
+          headers.forEach({ hd ->
+            copy {
+              from hd
+              into "${outdir}/headers"
+            }
+          })
+        }
       }
     })
   }
