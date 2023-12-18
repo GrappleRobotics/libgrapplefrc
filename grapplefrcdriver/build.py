@@ -30,6 +30,14 @@ TRIPLE_LOOKUP = {
   ("linuxx86-64"): {
     'triple': "x86_64-unknown-linux-gnu",
     'path': 'linux/x86-64'
+  },
+  ("linuxarm64"): {
+    'triple': "aarch64-unknown-linux-gnu",
+    'path': 'linux/arm64'
+  },
+  ("linuxarm32"): {
+    'triple': "arm-unknown-linux-gnueabihf",
+    'path': 'linux/arm32'
   }
 }
 
