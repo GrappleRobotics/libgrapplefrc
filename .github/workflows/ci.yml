@@ -72,15 +72,16 @@ jobs:
             architecture: x64
             platform: windowsx86-64
             build-options: ""
+          - os: macos-12
+            artifact-name: macOS
+            architecture: x64
+            platform: osxuniversal
+            build-options: ""
           - os: windows-2022
             artifact-name: WinArm64
             architecture: x64
             platform: windowsarm64
             build-options: "-Pbuildwinarm64 -Ponlywindowsarm64"
-          # - os: macos-11
-          #   artifact-name: macOS
-          #   architecture: x64
-          #   platform: osxuniversal
     name: "Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
@@ -98,6 +99,9 @@ jobs:
         uses: ATiltedTree/setup-rust@v1
         with:
           rust-version: stable
+      - name: Setup Rust Toolchain (macOS Arm64)
+        run: rustup target add aarch64-apple-darwin
+        if: matrix.artifact-name == 'macOS'
       - name: Setup Rust Toolchain (Windows Arm64)
         run: rustup target add aarch64-pc-windows-msvc
         if: matrix.artifact-name == 'WinArm64'
