@@ -65,7 +65,7 @@ jobs:
             artifact-name: Win64
             architecture: x64
             platform: windowsx86-64
-          - os: macos-11
+          - os: macos-12
             artifact-name: macOS
             architecture: x64
             platform: osxuniversal
