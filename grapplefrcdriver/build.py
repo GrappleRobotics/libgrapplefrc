@@ -41,7 +41,7 @@ def build(platform):
     print("No Triple found for {}".format(platform), file=sys.stderr)
     exit(1)
 
-  run("cargo", "build", "--target={}".format(triple)) 
+  run("cargo", "build", "--target={}".format(triple))
   run("cargo", "build", "--release", "--target={}".format(triple))
 
   # Zip it up for maven
@@ -49,7 +49,7 @@ def build(platform):
   identifier = "libgrapplefrcdriver"
   classifierBase = platform
   outdir = f"target/zips/{package}/{identifier}/{VERSION}"
-  
+
   try:
     os.makedirs(outdir)
   except FileExistsError:
@@ -74,7 +74,7 @@ def build(platform):
     with zipfile.ZipFile(f"{outdir}/{identifier}-{VERSION}-{classifier}.zip", "w") as zf:
       for (fkey, fname) in files.items():
         zf.write(f"target/{triple}/{mode}/{fkey}", f"{details['path']}/shared/{fname}")
-  
+
   # And lastly, the .pom
   with open(f"{outdir}/{identifier}-{VERSION}.pom", "w") as f:
     f.write("""<?xml version="1.0" encoding="UTF-8"?>

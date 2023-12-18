@@ -119,15 +119,17 @@ import java.nio.file.StandardCopyOption;
 task updateRustLibs() {
   doLast {
     nativeUtils.nativeDependencyContainer.getByName("driver_shared", libset -> {
-      // Defaulting to release
-      def buildType = nativeUtils.buildTypes.named('release').get()
+      def debugBuildType = nativeUtils.buildTypes.named('debug').get()
+      def releaseBuildType = nativeUtils.buildTypes.named('release').get()
       for (targetPlatform in nativeUtils.platforms) {
-        def resolved = libset.resolveNativeDependency(targetPlatform, buildType, java.util.Optional.empty()).get()
+        def resolved = libset.resolveNativeDependency(targetPlatform, releaseBuildType, java.util.Optional.empty()).get()
+        def resolvedDebug = libset.resolveNativeDependency(targetPlatform, debugBuildType, java.util.Optional.empty()).get()
 
         def headers = []
         def libs = []
 
         resolved.getLinkFiles().forEach({ f -> libs += f })
+        resolvedDebug.getLinkFiles().forEach({ f -> libs += f })
         resolved.getIncludeRoots().forEach({ f -> headers += f })
 
         def triple = rust_triple(targetPlatform)
