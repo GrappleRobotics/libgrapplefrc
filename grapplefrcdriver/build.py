@@ -3,7 +3,7 @@ import subprocess
 import sys
 import zipfile
 
-NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2023/roborio/bin")
+NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2024/roborio/bin")
 
 # TODO: Load from cargo metadata
 VERSION = "2024.0.0-beta1"
@@ -23,6 +23,10 @@ TRIPLE_LOOKUP = {
     'triple': "x86_64-pc-windows-msvc",
     'path': 'windows/x86-64'
   },
+  ("windowsarm64"): {
+    'triple': "aarch64-pc-windows-msvc",
+    'path': 'windows/arm64'
+  },
   ("osxuniversal"): {
     'triple': "x86_64-apple-darwin",
     'path': 'osx/universal'
@@ -30,6 +34,14 @@ TRIPLE_LOOKUP = {
   ("linuxx86-64"): {
     'triple': "x86_64-unknown-linux-gnu",
     'path': 'linux/x86-64'
+  },
+  ("linuxarm64"): {
+    'triple': "aarch64-unknown-linux-gnu",
+    'path': 'linux/arm64'
+  },
+  ("linuxarm32"): {
+    'triple': "arm-unknown-linux-gnueabihf",
+    'path': 'linux/arm32'
   }
 }
 
