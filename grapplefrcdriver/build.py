@@ -41,15 +41,32 @@ def build(platform):
     print("No Triple found for {}".format(platform), file=sys.stderr)
     exit(1)
 
-  run("cargo", "build", "--target={}".format(triple)) 
+  run("cargo", "build", "--target={}".format(triple))
   run("cargo", "build", "--release", "--target={}".format(triple))
+
+  # OSX builds universal by building both and then merging
+  if platform == "osxuniversal":
+    run("cargo", "build", "--target=aarch64-apple-darwin")
+    run("cargo", "build", "--release", "--target=aarch64-apple-darwin")
+
+    for mode in ["debug", "release"]:
+      mode_dir = f"target/universal-apple-darwin/{mode}"
+      try:
+        os.makedirs(mode_dir)
+      except FileExistsError:
+        pass
+      output_file = f"{mode_dir}/libgrapplefrcdriver.dylib"
+      intel_file = f"target/x86_64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
+      arm_file = f"target/aarch64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
+      run("lipo", "-create", "-output", output_file, intel_file, arm_file)
+      triple = "universal-apple-darwin"
 
   # Zip it up for maven
   package = "au/grapplerobotics"
   identifier = "libgrapplefrcdriver"
   classifierBase = platform
   outdir = f"target/zips/{package}/{identifier}/{VERSION}"
-  
+
   try:
     os.makedirs(outdir)
   except FileExistsError:
@@ -74,7 +91,7 @@ def build(platform):
     with zipfile.ZipFile(f"{outdir}/{identifier}-{VERSION}-{classifier}.zip", "w") as zf:
       for (fkey, fname) in files.items():
         zf.write(f"target/{triple}/{mode}/{fkey}", f"{details['path']}/shared/{fname}")
-  
+
   # And lastly, the .pom
   with open(f"{outdir}/{identifier}-{VERSION}.pom", "w") as f:
     f.write("""<?xml version="1.0" encoding="UTF-8"?>
