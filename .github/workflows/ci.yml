@@ -8,16 +8,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/roborio-cross-ubuntu:2023-22.04
+          - container: wpilib/roborio-cross-ubuntu:2024-22.04
             artifact-name: Athena
             build-options: "-Ponlylinuxathena"
             platform: linuxathena
-          # - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
-          #   artifact-name: Arm32
-          #   build-options: "-Ponlylinuxarm32"
-          # - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
-          #   artifact-name: Arm64
-          #   build-options: "-Ponlylinuxarm64"
+          - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
+            artifact-name: Arm32
+            build-options: "-Ponlylinuxarm32"
+            platform: linuxarm32
+          - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
+            artifact-name: Arm64
+            build-options: "-Ponlylinuxarm64"
+            platform: linuxarm64
           - container: wpilib/ubuntu-base:22.04
             artifact-name: Linux
             build-options: ""
@@ -39,6 +41,10 @@ jobs:
           rust-version: stable
       - name: Setup Rust Toolchain (Athena)
         run: rustup target add arm-unknown-linux-gnueabi
+      - name: Setup Rust Toolchain (Arm32)
+        run: rustup target add arm-unknown-linux-gnueabihf
+      - name: Setup Rust Toolchain (Arm64)
+        run: rustup target add aarch64-unknown-linux-gnu
       - name: Install Clang
         run: apt-get update && apt-get install -y libclang1-15 clang llvm gcc-multilib
       - name: Prepare Rust Libs
@@ -61,14 +67,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2019
+          - os: windows-2022
             artifact-name: Win64
             architecture: x64
             platform: windowsx86-64
+            build-options: ""
           - os: macos-12
             artifact-name: macOS
             architecture: x64
             platform: osxuniversal
+            build-options: ""
+          - os: windows-2022
+            artifact-name: WinArm64
+            architecture: x64
+            platform: windowsarm64
+            build-options: "-Pbuildwinarm64 -Ponlywindowsarm64"
     name: "Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
@@ -89,12 +102,15 @@ jobs:
       - name: Setup Rust Toolchain (macOS Arm64)
         run: rustup target add aarch64-apple-darwin
         if: matrix.artifact-name == 'macOS'
+      - name: Setup Rust Toolchain (Windows Arm64)
+        run: rustup target add aarch64-pc-windows-msvc
+        if: matrix.artifact-name == 'WinArm64'
       - name: Prepare Rust Libs
         run: ./gradlew updateRustLibs --max-workers 1
       - name: Build Rust
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
-        run: ./gradlew publishToMavenLocal -Pbuildalldesktop
+        run: ./gradlew publishToMavenLocal ${{ matrix.build-options }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
