@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use pyo3::prelude::*;
 use grapplefrcdriver::lasercan::{LaserCanDevice, lasercan_get_status, lasercan_set_range, lasercan_set_timing_budget, lasercan_set_roi};
 use grapple_frc_msgs::grapple::lasercan::{LaserCanStatusFrame, LaserCanRoi};
