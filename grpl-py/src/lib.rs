@@ -1,6 +1,9 @@
+use grapple_frc_msgs::grapple::lasercan::{LaserCanRoi, LaserCanStatusFrame};
+use grapplefrcdriver::lasercan::{
+    lasercan_get_status, lasercan_set_range, lasercan_set_roi, lasercan_set_timing_budget,
+    LaserCanDevice,
+};
 use pyo3::prelude::*;
-use grapplefrcdriver::lasercan::{LaserCanDevice, lasercan_get_status, lasercan_set_range, lasercan_set_timing_budget, lasercan_set_roi};
-use grapple_frc_msgs::grapple::lasercan::{LaserCanStatusFrame, LaserCanRoi};
 use std::ptr::addr_of_mut;
 
 #[pyclass]
@@ -13,7 +16,7 @@ enum LaserCanRangingMode {
 impl LaserCanRangingMode {
     fn is_long(&self) -> bool {
         if *self == LaserCanRangingMode::Long {
-            return true
+            return true;
         }
         false
     }
@@ -45,24 +48,20 @@ struct LaserCAN {
 }
 
 impl LaserCAN {
-
     fn new(can_id: u8) -> Self {
         let handle = LaserCanDevice::new(can_id);
-        LaserCAN {
-            handle,
-            can_id,
-        }
+        LaserCAN { handle, can_id }
     }
 
     fn get_measurement(&mut self) -> Option<LaserCanStatusFrame> {
         let status = lasercan_get_status(addr_of_mut!(self.handle));
-        if  status.status != 0xFF {
-            return Some(status)
+        if status.status != 0xFF {
+            return Some(status);
         }
         None
     }
 
-    fn set_ranging_mode(&mut self, mode : LaserCanRangingMode) -> i32 {
+    fn set_ranging_mode(&mut self, mode: LaserCanRangingMode) -> i32 {
         lasercan_set_range(addr_of_mut!(self.handle), mode.is_long())
     }
 
