@@ -10,56 +10,13 @@ use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_
 pub struct LaserCanDevice {
   can_id: u8,
   fragment_id: u8,
-  last_status_frame: Arc<RwLock<Option<LaserCanStatusFrame>>>,
-  stop_signal: mpsc::Sender<()>
+  last_status_frame: Option<LaserCanStatusFrame>,
+  reassembler: FragmentReassembler,
 }
 
 impl LaserCanDevice {
   pub fn new(can_id: u8) -> LaserCanDevice {
-    let (stop_tx, stop_rx) = mpsc::channel();
-
-    let last_status_frame = Arc::new(RwLock::new(None));
-    
-    let last_status_frame2 = last_status_frame.clone();
-    std::thread::spawn(move || {
-      let mut reassemble = FragmentReassembler::new(1000);
-      loop {
-        let mut message_id: u32 = CANId { manufacturer: MANUFACTURER_GRAPPLE, device_type: DEVICE_TYPE_DISTANCE_SENSOR, device_id: can_id, api_class: 0x00, api_index: 0x00 }.into();
-        let mask: u32 = CANId { manufacturer: 0xFF, device_type: 0xFF, device_id: 0xFF, api_class: 0x00, api_index: 0x00 }.into();
-        let mut data = [0u8; 8];
-        let mut len = 0u8;
-        let mut timestamp = 0u32;
-
-        let result = hal_safe_call!(HAL_CAN_ReceiveMessage(&mut message_id as *mut u32, mask, data.as_mut_ptr(), &mut len as *mut u8, &mut timestamp as *mut u32));
-
-        match result {
-          Ok(_) => {
-            // Try decode
-            let msg = CANMessage::decode(message_id.into(), &data[..]);
-            match reassemble.process(timestamp as i64, len, msg) {
-              Some((_, msg)) => match msg {
-                CANMessage::Message(msg) => match msg.msg {
-                  ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(grapple_frc_msgs::grapple::lasercan::LaserCanMessage::Status(status))) => {
-                    *last_status_frame2.write().unwrap() = Some(status);
-                  },
-                  _ => ()
-                }
-                _ => ()
-              },
-              None => { },
-            }
-          },
-          Err(_) => { },
-        }
-
-        match stop_rx.recv_timeout(Duration::from_millis(10)) {
-          Ok(_) => break,
-          Err(_) => (),
-        }
-      }
-    });
-
-    LaserCanDevice { can_id, fragment_id: 0, last_status_frame, stop_signal: stop_tx }
+    LaserCanDevice { can_id, fragment_id: 0, last_status_frame: None, reassembler: FragmentReassembler::new(1000) }
   }
 
   pub fn send_ll(&mut self, msg: Message) -> anyhow::Result<()> {
@@ -76,13 +33,44 @@ impl LaserCanDevice {
     }
   }
 
+  pub fn spin_once(&mut self) {
+    let mut message_id: u32 = CANId { manufacturer: MANUFACTURER_GRAPPLE, device_type: DEVICE_TYPE_DISTANCE_SENSOR, device_id: self.can_id, api_class: 0x00, api_index: 0x00 }.into();
+    let mask: u32 = CANId { manufacturer: 0xFF, device_type: 0xFF, device_id: 0xFF, api_class: 0x00, api_index: 0x00 }.into();
+    let mut data = [0u8; 8];
+    let mut len = 0u8;
+    let mut timestamp = 0u32;
+
+    let result = hal_safe_call!(HAL_CAN_ReceiveMessage(&mut message_id as *mut u32, mask, data.as_mut_ptr(), &mut len as *mut u8, &mut timestamp as *mut u32));
+
+    match result {
+      Ok(_) => {
+        // Try decode
+        let msg = CANMessage::decode(message_id.into(), &data[..]);
+        match self.reassembler.process(timestamp as i64, len, msg) {
+          Some((_, msg)) => match msg {
+            CANMessage::Message(msg) => match msg.msg {
+              ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(grapple_frc_msgs::grapple::lasercan::LaserCanMessage::Status(status))) => {
+                self.last_status_frame = Some(status);
+              },
+              _ => ()
+            }
+            _ => ()
+          },
+          None => { },
+        }
+      },
+      Err(_) => { },
+    }
+  }
+
   pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
     let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
     self.send_ll(msg)
   }
 
   pub fn status(&mut self) -> LaserCanStatusFrame {
-    match self.last_status_frame.read().unwrap().clone() {
+    self.spin_once();
+    match self.last_status_frame.clone() {
       Some(v) => v,
       None => LaserCanStatusFrame {
         status: 0xFF,
@@ -93,12 +81,6 @@ impl LaserCanDevice {
         roi: LaserCanRoi { x: LaserCanRoiU4(0), y: LaserCanRoiU4(0), w: LaserCanRoiU4(0), h: LaserCanRoiU4(0) },
       }
     }
-  }
-}
-
-impl Drop for LaserCanDevice {
-  fn drop(&mut self) {
-    self.stop_signal.send(()).ok();
   }
 }
 
