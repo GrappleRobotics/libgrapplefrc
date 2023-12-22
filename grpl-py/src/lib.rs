@@ -88,3 +88,41 @@ fn grpl(_py: Python, m: &PyModule) -> PyResult<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{LaserCanRangingMode, LaserCanTimingBudget};
+
+    fn laser_can_budget_tester(budget: &LaserCanTimingBudget) {
+        match budget {
+            LaserCanTimingBudget::TimingBudget20ms => assert_eq!(budget.as_u8(), 20),
+            LaserCanTimingBudget::TimingBudget33ms => assert_eq!(budget.as_u8(), 33),
+            LaserCanTimingBudget::TimingBudget50ms => assert_eq!(budget.as_u8(), 50),
+            LaserCanTimingBudget::TimingBudget100ms => assert_eq!(budget.as_u8(), 100),
+        }
+    }
+
+    #[test]
+    fn test_laser_can_budget_u8() {
+        let mut budget = LaserCanTimingBudget::TimingBudget20ms;
+        laser_can_budget_tester(&budget);
+
+        budget = LaserCanTimingBudget::TimingBudget33ms;
+        laser_can_budget_tester(&budget);
+
+        budget = LaserCanTimingBudget::TimingBudget50ms;
+        laser_can_budget_tester(&budget);
+
+        budget = LaserCanTimingBudget::TimingBudget100ms;
+        laser_can_budget_tester(&budget);
+    }
+
+    #[test]
+    fn test_ranging_is_long() {
+        let mut ranging_mode = LaserCanRangingMode::Long;
+        assert_eq!(ranging_mode.is_long(), true);
+
+        ranging_mode = LaserCanRangingMode::Short;
+        assert_eq!(ranging_mode.is_long(), false);
+    }
+}
