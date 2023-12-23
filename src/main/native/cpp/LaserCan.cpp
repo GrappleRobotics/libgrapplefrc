@@ -15,7 +15,7 @@ LaserCan::~LaserCan() {
 }
 
 std::optional<LaserCanMeasurement> LaserCan::get_measurement() const {
-  return conv_opt<ffi::LaserCanStatusFrame>(ffi::lasercan_get_status(_handle)._0);
+  return conv_opt(ffi::lasercan_get_status(_handle)._0);
 }
 
 int LaserCan::set_ranging_mode(LaserCanRangingMode mode) {
