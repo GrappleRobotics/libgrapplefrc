@@ -1,10 +1,6 @@
 use grapple_frc_msgs::grapple::lasercan::{LaserCanRoi, LaserCanStatusFrame};
-use grapplefrcdriver::lasercan::{
-    lasercan_get_status, lasercan_set_range, lasercan_set_roi, lasercan_set_timing_budget,
-    LaserCanDevice,
-};
+use grapplefrcdriver::{lasercan::LaserCanDevice, with_err};
 use pyo3::prelude::*;
-use std::ptr::addr_of_mut;
 
 #[pyclass]
 #[derive(PartialEq)]
@@ -54,25 +50,32 @@ impl LaserCAN {
     }
 
     fn get_measurement(&mut self) -> Option<LaserCanStatusFrame> {
-        let status = lasercan_get_status(addr_of_mut!(self.handle));
-        if status.status != 0xFF {
-            return Some(status);
+        let status = self.handle.status();
+        if status == None {
+            return None;
         }
+
+        if status.clone().unwrap().status != 0xFF {
+            return status;
+        }
+
         None
     }
 
     fn set_ranging_mode(&mut self, mode: LaserCanRangingMode) -> i32 {
-        lasercan_set_range(addr_of_mut!(self.handle), mode.is_long())
+        with_err(self.handle.set_range(mode.is_long()))
     }
 
     fn set_timing_range_budget(&mut self, budget: LaserCanTimingBudget) -> i32 {
-        lasercan_set_timing_budget(addr_of_mut!(self.handle), budget.as_u8())
+        with_err(self.handle.set_timing_budget(budget.as_u8()))
     }
 
     fn set_roi(&mut self, roi: LaserCanRoi) -> i32 {
-        lasercan_set_roi(addr_of_mut!(self.handle), roi)
+        with_err(self.handle.set_roi(roi))
     }
 }
+
+unsafe impl Send for LaserCAN {}
 
 #[pymodule]
 fn grpl(_py: Python, m: &PyModule) -> PyResult<()> {
