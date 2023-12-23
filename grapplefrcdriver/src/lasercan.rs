@@ -1,22 +1,29 @@
-use std::{sync::{RwLock, mpsc, Arc}, time::Duration, ffi::c_int};
+use std::{sync::{RwLock, mpsc, Arc}, time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}};
 
 use grapple_frc_msgs::{grapple::{lasercan::{LaserCanStatusFrame, LaserCanMessage, LaserCanRoi, LaserCanRoiU4}, MANUFACTURER_GRAPPLE, DEVICE_TYPE_DISTANCE_SENSOR, GrappleDeviceMessage}, can::{CANId, CANMessage, FragmentReassembler}, ManufacturerMessage, Message, Validate};
 use jni::objects::{JClass, JObject, JValueGen};
 use jni::sys::{jint, jlong, jobject, jboolean};
 use jni::JNIEnv;
 
-use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, with_err};
+use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, with_err, COptional, JNIResultExtension};
 
-pub struct LaserCanDevice {
-  can_id: u8,
-  fragment_id: u8,
-  last_status_frame: Option<LaserCanStatusFrame>,
-  reassembler: FragmentReassembler,
+pub trait LaserCanImpl {
+  fn status(&mut self) -> Option<LaserCanStatusFrame>;
+  fn set_timing_budget(&mut self, budget: u8) -> anyhow::Result<()>;
+  fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()>;
+  fn set_range(&mut self, long: bool) -> anyhow::Result<()>;
 }
 
-impl LaserCanDevice {
-  pub fn new(can_id: u8) -> LaserCanDevice {
-    LaserCanDevice { can_id, fragment_id: 0, last_status_frame: None, reassembler: FragmentReassembler::new(1000) }
+pub struct NativeLaserCan {
+  can_id: u8,
+  fragment_id: u8,
+  last_status_frame: Option<(Instant, LaserCanStatusFrame)>,
+  reassembler: FragmentReassembler
+}
+
+impl NativeLaserCan {
+  pub fn new(can_id: u8) -> Self {
+    Self { can_id, fragment_id: 0, last_status_frame: None, reassembler: FragmentReassembler::new(1000) }
   }
 
   pub fn send_ll(&mut self, msg: Message) -> anyhow::Result<()> {
@@ -31,6 +38,11 @@ impl LaserCanDevice {
     } else {
       Ok(())
     }
+  }
+
+  pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
+    let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
+    self.send_ll(msg)
   }
 
   pub fn spin_once(&mut self) {
@@ -50,7 +62,7 @@ impl LaserCanDevice {
           Some((_, msg)) => match msg {
             CANMessage::Message(msg) => match msg.msg {
               ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(grapple_frc_msgs::grapple::lasercan::LaserCanMessage::Status(status))) => {
-                self.last_status_frame = Some(status);
+                self.last_status_frame = Some((Instant::now(), status));
               },
               _ => ()
             }
@@ -62,27 +74,62 @@ impl LaserCanDevice {
       Err(_) => { },
     }
   }
+}
 
-  pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
-    let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
-    self.send_ll(msg)
-  }
-
-  pub fn status(&mut self) -> LaserCanStatusFrame {
+impl LaserCanImpl for NativeLaserCan {
+  fn status(&mut self) -> Option<LaserCanStatusFrame> {
     self.spin_once();
     match self.last_status_frame.clone() {
-      Some(v) => v,
-      None => LaserCanStatusFrame {
-        status: 0xFF,
-        distance_mm: 0,
-        ambient: 0,
-        long: false,
-        budget_ms: 0,
-        roi: LaserCanRoi { x: LaserCanRoiU4(0), y: LaserCanRoiU4(0), w: LaserCanRoiU4(0), h: LaserCanRoiU4(0) },
-      }
+      Some((time, frame)) => {
+        if (Instant::now() - time) > Duration::from_millis(500) {
+          self.last_status_frame = None;
+          None
+        } else {
+          Some(frame.clone())
+        }
+      },
+      None => None
     }
   }
+
+  fn set_timing_budget(&mut self, budget: u8) -> anyhow::Result<()> {
+    self.send(LaserCanMessage::SetTimingBudget { budget })
+  }
+
+  fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()> {
+    self.send(LaserCanMessage::SetRoi { roi })
+  }
+
+  fn set_range(&mut self, long: bool) -> anyhow::Result<()> {
+    self.send(LaserCanMessage::SetRange { long })
+  }
 }
+
+pub struct LaserCanDevice {
+  backend: Box<dyn LaserCanImpl>
+}
+
+impl LaserCanDevice {
+  pub fn new(can_id: u8) -> Self {
+    Self { backend: Box::new(NativeLaserCan::new(can_id)) }
+  }
+}
+
+impl Deref for LaserCanDevice {
+  type Target = Box<dyn LaserCanImpl>;
+
+  fn deref(&self) -> &Self::Target {
+    &self.backend
+  }
+}
+
+impl DerefMut for LaserCanDevice {
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.backend
+  }
+}
+
+// C
 
 #[no_mangle]
 pub extern "C" fn lasercan_new(can_id: u8) -> *mut LaserCanDevice {
@@ -93,31 +140,35 @@ pub extern "C" fn lasercan_new(can_id: u8) -> *mut LaserCanDevice {
 pub extern "C" fn lasercan_free(lc: *mut LaserCanDevice) {
   if lc.is_null() { return; }
   unsafe { drop(Box::from_raw(lc)) }
-}
+}  
+
+// Need to wrap this so MSVC doesn't complain about using C++ generics in extern "C"
+#[repr(C)]
+pub struct MaybeStatusFrame(COptional<LaserCanStatusFrame>);
 
 #[no_mangle]
-pub extern "C" fn lasercan_get_status(inst: *mut LaserCanDevice) -> LaserCanStatusFrame {
-  unsafe { (*inst).status() }
+pub extern "C" fn lasercan_get_status(inst: *mut LaserCanDevice) -> MaybeStatusFrame {
+  MaybeStatusFrame(unsafe { (*inst).status().into() })
 }
 
 #[no_mangle]
 pub extern "C" fn lasercan_set_timing_budget(inst: *mut LaserCanDevice, budget: u8) -> c_int {
   unsafe {
-    with_err((*inst).send(LaserCanMessage::SetTimingBudget { budget }))
+    with_err((*inst).set_timing_budget(budget))
   }
 }
 
 #[no_mangle]
 pub extern "C" fn lasercan_set_roi(inst: *mut LaserCanDevice, roi: LaserCanRoi) -> c_int {
   unsafe {
-    with_err((*inst).send(LaserCanMessage::SetRoi { roi }))
+    with_err((*inst).set_roi(roi))
   }
 }
 
 #[no_mangle]
 pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, long: bool) -> c_int {
   unsafe {
-    with_err((*inst).send(LaserCanMessage::SetRange { long }))
+    with_err((*inst).set_range(long))
   }
 }
 
@@ -126,15 +177,6 @@ pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, long: bool) -> c
 fn get_handle<'local>(env: &mut JNIEnv<'local>, inst: JObject<'local>) -> *mut LaserCanDevice {
   let handle = env.get_field(inst, "handle", "Lau/grapplerobotics/LaserCan$Handle;").unwrap().l().unwrap();
   env.get_field(handle, "handle", "J").unwrap().j().unwrap() as *mut LaserCanDevice
-}
-
-fn try_send<'local>(env: &mut JNIEnv<'local>, lc: *mut LaserCanDevice, msg: LaserCanMessage) {
-  let cls = env.find_class("au/grapplerobotics/NativeException").unwrap();
-  let ret = unsafe { (*lc).send(msg) };
-  match ret {
-    Ok(()) => (),
-    Err(err) => env.throw_new(cls, format!("{}", err)).unwrap(),
-  }
 }
 
 #[no_mangle]
@@ -164,26 +206,27 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_status<'local>(
   let lc = get_handle(&mut env, inst);
   let status = unsafe { (*lc).status() };
 
-  if status.status == 0xFF {
-    JObject::null().into_raw()
-  } else {
-    let cls = env.find_class("au/grapplerobotics/LaserCan$RegionOfInterest").unwrap();
-    let roi = env.new_object(cls, "(IIII)V", &[
-      JValueGen::Int(status.roi.x.0 as jint),
-      JValueGen::Int(status.roi.y.0 as jint),
-      JValueGen::Int(status.roi.w.0 as jint),
-      JValueGen::Int(status.roi.h.0 as jint),
-    ]).unwrap();
+  match status {
+    None => JObject::null().into_raw(),
+    Some(status) => {
+      let cls = env.find_class("au/grapplerobotics/LaserCan$RegionOfInterest").unwrap();
+      let roi = env.new_object(cls, "(IIII)V", &[
+        JValueGen::Int(status.roi.x.0 as jint),
+        JValueGen::Int(status.roi.y.0 as jint),
+        JValueGen::Int(status.roi.w.0 as jint),
+        JValueGen::Int(status.roi.h.0 as jint),
+      ]).unwrap();
 
-    let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
-    env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
-      JValueGen::Int(status.status as jint),
-      JValueGen::Int(status.distance_mm as jint),
-      JValueGen::Int(status.ambient as jint),
-      JValueGen::Bool(status.long as jboolean),
-      JValueGen::Int(status.budget_ms as jint),
-      JValueGen::Object(&roi)
-    ]).unwrap().into_raw()
+      let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
+      env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
+        JValueGen::Int(status.status as jint),
+        JValueGen::Int(status.distance_mm as jint),
+        JValueGen::Int(status.ambient as jint),
+        JValueGen::Bool(status.long as jboolean),
+        JValueGen::Int(status.budget_ms as jint),
+        JValueGen::Object(&roi)
+      ]).unwrap().into_raw()
+    }
   }
 }
 
@@ -194,7 +237,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setRangingMode<'local>(
   is_long: bool,
 ) {
   let lc = get_handle(&mut env, inst);
-  try_send(&mut env, lc, LaserCanMessage::SetRange { long: is_long })
+  unsafe { (*lc).set_range(is_long).with_jni_throw(&mut env, |_| {}) }
 }
 
 #[no_mangle]
@@ -204,7 +247,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setTimingBudget<'local>(
   budget: jint,
 ) {
   let lc = get_handle(&mut env, inst);
-  try_send(&mut env, lc, LaserCanMessage::SetTimingBudget { budget: budget as u8 })
+  unsafe { (*lc).set_timing_budget(budget as u8).with_jni_throw(&mut env, |_| {}) }
 }
 
 #[no_mangle]
@@ -217,12 +260,12 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setRoi<'local>(
   h: jint,
 ) {
   let lc = get_handle(&mut env, inst);
-  try_send(&mut env, lc, LaserCanMessage::SetRoi {
-    roi: LaserCanRoi {
+  unsafe {
+    (*lc).set_roi(LaserCanRoi {
       x: LaserCanRoiU4(x as u8),
       y: LaserCanRoiU4(y as u8),
       w: LaserCanRoiU4(w as u8),
       h: LaserCanRoiU4(h as u8),
-    },
-  })
+    }).with_jni_throw(&mut env, |_| {})
+  }
 }
