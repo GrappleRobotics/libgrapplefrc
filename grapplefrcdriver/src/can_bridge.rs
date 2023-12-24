@@ -1,4 +1,4 @@
-use std::{net::{TcpListener, TcpStream}, io::{Read, Write}};
+use std::{net::{TcpListener, TcpStream}, io::{Read, Write, ErrorKind}};
 
 use grapple_frc_msgs::{bridge::BridgedCANMessage, binmarshal::{BitView, BinMarshal, VecBitWriter, LengthTaggedVec, BitWriter}, MessageId};
 
@@ -11,20 +11,28 @@ fn handle_client(mut stream: TcpStream) -> anyhow::Result<()> {
 
   loop {
     // Read from socket first
-    stream.read_to_end(&mut read_buf)?;
+    match stream.read_to_end(&mut read_buf) {
+      Ok(_) => (),
+      Err(e) if e.kind() == ErrorKind::WouldBlock => (),
+      Err(e) => anyhow::bail!(e)
+    };
+
     if read_buf.len() >= 2 {
-      let msg_len = u16::from_be_bytes([ read_buf[0], read_buf[1] ]) as usize;
+      let msg_len: usize = u16::from_le_bytes([ read_buf[0], read_buf[1] ]) as usize;
 
       if (read_buf.len() - 2) >= msg_len {
-        let data = read_buf.split_off(msg_len + 2);
+        let mut next_buf = read_buf.split_off(msg_len + 2);
 
-        let bridged_msg = BridgedCANMessage::read(&mut BitView::new(&data[2..]), ()).ok_or(anyhow::anyhow!("Invalid Message!"))?;
+        let bridged_msg = BridgedCANMessage::read(&mut BitView::new(&read_buf[2..]), ()).ok_or(anyhow::anyhow!("Invalid Message!"))?;
         hal_safe_call!(HAL_CAN_SendMessage(
           bridged_msg.id.into(),
           bridged_msg.data.0.as_slice().as_ptr(),
           bridged_msg.data.0.len() as u8,
           HAL_CAN_SEND_PERIOD_NO_REPEAT as i32
         ))?;
+
+        next_buf.reserve(1024);
+        read_buf = next_buf;
       }
     }
 
@@ -42,7 +50,30 @@ fn handle_client(mut stream: TcpStream) -> anyhow::Result<()> {
 
         let mut write_buf = VecBitWriter::new();
         bridged_msg.write(&mut write_buf, ());
-        stream.write_all(write_buf.slice())?;
+        let mut slice = write_buf.slice();
+        
+        let l = u16::to_le_bytes(slice.len() as u16);
+        let mut slice1 = &l[..];
+
+        // Block on writes to the socket
+
+        while !slice1.is_empty() {
+          match stream.write(slice1) {
+            Ok(0) => anyhow::bail!("Failed to write"),
+            Ok(n) => slice1 = &slice1[n..],
+            Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
+            Err(e) => anyhow::bail!("Write error: {}", e)
+          }
+        }
+
+        while !slice.is_empty() {
+          match stream.write(slice) {
+            Ok(0) => anyhow::bail!("Failed to write"),
+            Ok(n) => slice = &slice[n..],
+            Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
+            Err(e) => anyhow::bail!("Write error: {}", e)
+          }
+        }
       },
       Err(_) => ()
     }
@@ -53,10 +84,9 @@ fn start_can_bridge() -> anyhow::Result<()> {
   let server = TcpListener::bind("172.22.11.2:8006")?;
 
   for stream in server.incoming() {
-    match handle_client(stream?) {
-      Ok(_) => println!("[CAN BRIDGE] Client Disconnected Gracefully"),
-      Err(e) => println!("[CAN BRIDGE] Client Disconnected: {}", e),
-    }
+    // Only handle one client at a time, otherwise the process lives forever when GrappleHook is done.
+    handle_client(stream?)?;
+    break;
   }
 
   Ok(())
