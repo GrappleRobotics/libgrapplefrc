@@ -1,11 +1,11 @@
 {
-    "fileName": "libgrapplefrc2023.json",
+    "fileName": "libgrapplefrc2024.json",
     "name": "libgrapplefrc",
     "version": "2024.0.0-beta3",
     "frcYear": "2024",
     "uuid": "8ef3423d-9532-4665-8339-206dae1d7168",
     "mavenUrls": [ "https://storage.googleapis.com/grapple-frc-maven" ],
-    "jsonUrl": "https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2023.json",
+    "jsonUrl": "https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2024.json",
     "javaDependencies": [
         {
             "groupId": "au.grapplerobotics",
@@ -54,7 +54,7 @@
             "groupId": "au.grapplerobotics",
             "artifactId": "libgrapplefrcdriver",
             "version": "2024.0.0-beta3",
-            "libName": "grapplefrcrust",
+            "libName": "grapplefrcdriver",
             "headerClassifier": "headers",
             "sharedLibrary": true,
             "skipInvalidPlatforms": true,
