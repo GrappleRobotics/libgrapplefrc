@@ -11,6 +11,7 @@ use jni::JNIEnv;
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub mod calling;
+pub mod can;
 pub mod lasercan;
 
 // From https://michael-f-bryan.github.io/rust-ffi-guide/errors/return_types.html

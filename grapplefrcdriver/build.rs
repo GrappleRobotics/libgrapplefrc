@@ -5,7 +5,7 @@ const SYMBOL_REGEX: &str = r"(HAL_)\w+";
 
 use std::{env, path::PathBuf};
 use std::path::Path;
-use cbindgen::{Config, Builder, Language};
+use cbindgen::{Config, Builder};
 
 fn main() {
   let target = env::var("TARGET").unwrap();

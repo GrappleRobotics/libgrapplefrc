@@ -1,11 +1,11 @@
-use std::{sync::{RwLock, mpsc, Arc}, time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}};
+use std::{time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}};
 
-use grapple_frc_msgs::{grapple::{lasercan::{LaserCanStatusFrame, LaserCanMessage, LaserCanRoi, LaserCanRoiU4}, MANUFACTURER_GRAPPLE, DEVICE_TYPE_DISTANCE_SENSOR, GrappleDeviceMessage}, can::{CANId, CANMessage, FragmentReassembler}, ManufacturerMessage, Message, Validate};
+use grapple_frc_msgs::{grapple::{errors::{CowStr, GrappleError}, lasercan::{LaserCanStatusFrame, LaserCanMessage, LaserCanRoi, LaserCanRoiU4}, GrappleDeviceMessage, Request}, binmarshal::HasTags, request_factory};
 use jni::objects::{JClass, JObject, JValueGen};
 use jni::sys::{jint, jlong, jobject, jboolean};
 use jni::JNIEnv;
 
-use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, with_err, COptional, JNIResultExtension};
+use crate::{with_err, COptional, JNIResultExtension, can::GrappleCanDriver};
 
 pub trait LaserCanImpl {
   fn status(&mut self) -> Option<LaserCanStatusFrame>;
@@ -15,70 +15,31 @@ pub trait LaserCanImpl {
 }
 
 pub struct NativeLaserCan {
-  can_id: u8,
-  fragment_id: u8,
+  driver: GrappleCanDriver,
   last_status_frame: Option<(Instant, LaserCanStatusFrame)>,
-  reassembler: FragmentReassembler
 }
 
 impl NativeLaserCan {
   pub fn new(can_id: u8) -> Self {
-    Self { can_id, fragment_id: 0, last_status_frame: None, reassembler: FragmentReassembler::new(1000) }
-  }
-
-  pub fn send_ll(&mut self, msg: Message) -> anyhow::Result<()> {
-    msg.validate().map_err(|e| anyhow::anyhow!("{}", e))?;
-
-    let fragments = FragmentReassembler::maybe_split(msg, self.fragment_id.wrapping_add(1));
-    if let Some(fragments) = fragments {
-      for frag in fragments {
-        hal_safe_call!(HAL_CAN_SendMessage(Into::<u32>::into(frag.id), frag.payload.as_ptr(), frag.len, HAL_CAN_SEND_PERIOD_NO_REPEAT as i32))?;
-      }
-      Ok(())
-    } else {
-      Ok(())
-    }
-  }
-
-  pub fn send(&mut self, msg: LaserCanMessage) -> anyhow::Result<()> {
-    let msg = Message::new(self.can_id, ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(msg)));
-    self.send_ll(msg)
-  }
-
-  pub fn spin_once(&mut self) {
-    let mut message_id: u32 = CANId { manufacturer: MANUFACTURER_GRAPPLE, device_type: DEVICE_TYPE_DISTANCE_SENSOR, device_id: self.can_id, api_class: 0x00, api_index: 0x00 }.into();
-    let mask: u32 = CANId { manufacturer: 0xFF, device_type: 0xFF, device_id: 0xFF, api_class: 0x00, api_index: 0x00 }.into();
-    let mut data = [0u8; 8];
-    let mut len = 0u8;
-    let mut timestamp = 0u32;
-
-    let result = hal_safe_call!(HAL_CAN_ReceiveMessage(&mut message_id as *mut u32, mask, data.as_mut_ptr(), &mut len as *mut u8, &mut timestamp as *mut u32));
-
-    match result {
-      Ok(_) => {
-        // Try decode
-        let msg = CANMessage::decode(message_id.into(), &data[..]);
-        match self.reassembler.process(timestamp as i64, len, msg) {
-          Some((_, msg)) => match msg {
-            CANMessage::Message(msg) => match msg.msg {
-              ManufacturerMessage::Grapple(GrappleDeviceMessage::DistanceSensor(grapple_frc_msgs::grapple::lasercan::LaserCanMessage::Status(status))) => {
-                self.last_status_frame = Some((Instant::now(), status));
-              },
-              _ => ()
-            }
-            _ => ()
-          },
-          None => { },
-        }
-      },
-      Err(_) => { },
+    Self {
+      driver: GrappleCanDriver::new(can_id, <GrappleDeviceMessage as HasTags>::Tags::DistanceSensor.to_tag()),
+      last_status_frame: None
     }
   }
 }
 
 impl LaserCanImpl for NativeLaserCan {
   fn status(&mut self) -> Option<LaserCanStatusFrame> {
-    self.spin_once();
+    self.driver.spin(&mut |_id, msg| {
+      match msg {
+        GrappleDeviceMessage::DistanceSensor(LaserCanMessage::Status(status)) => {
+          self.last_status_frame = Some((Instant::now(), status));
+          false
+        },
+        _ => true
+      }
+    });
+
     match self.last_status_frame.clone() {
       Some((time, frame)) => {
         if (Instant::now() - time) > Duration::from_millis(500) {
@@ -93,15 +54,21 @@ impl LaserCanImpl for NativeLaserCan {
   }
 
   fn set_timing_budget(&mut self, budget: u8) -> anyhow::Result<()> {
-    self.send(LaserCanMessage::SetTimingBudget { budget })
+    let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetTimingBudget(data)));
+    decode(self.driver.request(encode(budget), 500)?)??;
+    Ok(())
   }
 
   fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()> {
-    self.send(LaserCanMessage::SetRoi { roi })
+    let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRoi(data)));
+    decode(self.driver.request(encode(roi), 500)?)??;
+    Ok(())
   }
 
   fn set_range(&mut self, long: bool) -> anyhow::Result<()> {
-    self.send(LaserCanMessage::SetRange { long })
+    let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRange(data)));
+    decode(self.driver.request(encode(long), 500)?)??;
+    Ok(())
   }
 }
 
@@ -181,8 +148,8 @@ fn get_handle<'local>(env: &mut JNIEnv<'local>, inst: JObject<'local>) -> *mut L
 
 #[no_mangle]
 pub extern "system" fn Java_au_grapplerobotics_LaserCan_init<'local>(
-  mut env: JNIEnv<'local>,
-  class: JClass<'local>,
+  mut _env: JNIEnv<'local>,
+  _class: JClass<'local>,
   can_id: jint,
 ) -> jlong {
   let ptr = Box::into_raw(Box::new(LaserCanDevice::new(can_id as u8)));
@@ -191,8 +158,8 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_init<'local>(
 
 #[no_mangle]
 pub extern "system" fn Java_au_grapplerobotics_LaserCan_free<'local>(
-  mut env: JNIEnv<'local>,
-  class: JClass<'local>,
+  mut _env: JNIEnv<'local>,
+  _class: JClass<'local>,
   handle: jlong,
 ) {
   unsafe { drop(Box::from_raw(handle as *mut LaserCanDevice)); }

@@ -11,7 +11,7 @@ crate-type = ["lib", "cdylib"]
 
 [dependencies]
 anyhow = "1.0.75"
-grapple-frc-msgs = { git = "https://github.com/GrappleRobotics/frc-msgs" }
+grapple-frc-msgs = { git = "https://github.com/GrappleRobotics/frc-msgs", branch = "new_frags" }
 jni = "0.21.1"
 
 [build-dependencies]
