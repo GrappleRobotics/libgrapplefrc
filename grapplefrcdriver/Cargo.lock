@@ -309,7 +309,7 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 [[package]]
 name = "grapple-frc-msgs"
 version = "0.1.3"
-source = "git+https://github.com/GrappleRobotics/frc-msgs?branch=new_frags#82d441a041f59e7033c75b7e8dc2db72f8ed483a"
+source = "git+https://github.com/GrappleRobotics/frc-msgs?branch=new_frags#e65b5381a7066c7cfd0ff39b255dd997ca7ae64f"
 dependencies = [
  "anyhow",
  "binmarshal",

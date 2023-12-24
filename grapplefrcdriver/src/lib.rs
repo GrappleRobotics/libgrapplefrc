@@ -12,6 +12,7 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 pub mod calling;
 pub mod can;
+pub mod can_bridge;
 pub mod lasercan;
 
 // From https://michael-f-bryan.github.io/rust-ffi-guide/errors/return_types.html
@@ -23,7 +24,7 @@ thread_local!{
 pub fn update_last_error(err: anyhow::Error) {
   LAST_ERROR.with(|prev| {
       *prev.borrow_mut() = Some(err);
-  });
+  }); 
 }
 
 /// Retrieve the most recent error, clearing it in the process.
