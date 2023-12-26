@@ -69,9 +69,9 @@ dependencies = [
 
 [[package]]
 name = "binmarshal"
-version = "0.2.7"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "428201018947a6384baeef8633e20d651da0a2c52967d274cad38015ecf91b17"
+checksum = "ef52819335fe738d04a0941a49ccd3b54c12660611456e2919a6bbb86787bc7a"
 dependencies = [
  "anyhow",
  "binmarshal-macros",
@@ -308,9 +308,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "grapple-frc-msgs"
-version = "2024.0.1"
+version = "2024.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f147451337b4846afe3faaa150b7caf4a3645bf198bbd0b2a63be4ebb48c9ac"
+checksum = "7873a0302eaf78396f0f8def395b470f6ebe36649e770fa3312d7ad31f073072"
 dependencies = [
  "anyhow",
  "binmarshal",
@@ -739,18 +739,18 @@ checksum = "222a222a5bfe1bba4a77b45ec488a741b3cb8872e5e499451fd7d0129c9c7c3d"
 
 [[package]]
 name = "thiserror"
-version = "1.0.51"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f11c217e1416d6f036b870f14e0413d480dbf28edbee1f877abaf0206af43bb7"
+checksum = "83a48fd946b02c0a526b2e9481c8e2a17755e47039164a86c4070446e3a4614d"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.51"
+version = "1.0.52"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01742297787513b79cf8e29d1056ede1313e2420b7b3b15d0a768b4921f549df"
+checksum = "e7fbe9b594d6568a6a1443250a7e67d80b74e1e96f6d1715e1e21cc1888291d3"
 dependencies = [
  "proc-macro2",
  "quote",

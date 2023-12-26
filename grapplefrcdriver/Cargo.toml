@@ -11,7 +11,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 anyhow = "1.0.75"
-grapple-frc-msgs = "~2024.0.0"
+grapple-frc-msgs = "~2024.0.6"
 jni = "0.21.1"
 
 [build-dependencies]

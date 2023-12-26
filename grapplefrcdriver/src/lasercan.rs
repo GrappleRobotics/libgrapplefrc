@@ -166,7 +166,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_free<'local>(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_au_grapplerobotics_LaserCan_status<'local>(
+pub extern "system" fn Java_au_grapplerobotics_LaserCan_getMeasurement<'local>(
   mut env: JNIEnv<'local>,
   inst: JObject<'local>,
 ) -> jobject {
