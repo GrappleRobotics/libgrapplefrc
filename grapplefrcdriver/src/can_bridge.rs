@@ -1,10 +1,10 @@
-use std::{net::{TcpListener, TcpStream}, io::{Read, Write, ErrorKind}};
+use std::{net::{TcpListener, TcpStream}, io::{Read, Write, ErrorKind}, time::Duration};
 
 use grapple_frc_msgs::{bridge::BridgedCANMessage, binmarshal::{BitView, BinMarshal, VecBitWriter, LengthTaggedVec, BitWriter}, MessageId};
 
-use crate::{hal_safe_call, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, HAL_CAN_ReceiveMessage};
+use crate::{hal_safe_call, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, HAL_CAN_OpenStreamSession, HAL_CANStreamMessage, HAL_CAN_ReadStreamSession, HAL_CAN_CloseStreamSession};
 
-fn handle_client(mut stream: TcpStream) -> anyhow::Result<()> {
+fn handle_client(session_handle: u32, mut stream: TcpStream) -> anyhow::Result<()> {
   let mut read_buf = Vec::with_capacity(1024);
 
   stream.set_nonblocking(true)?;
@@ -37,46 +37,48 @@ fn handle_client(mut stream: TcpStream) -> anyhow::Result<()> {
     }
 
     // See if there's anything to write
-    let mut data = [0u8; 64];
-    let mut len = 0u8;
-    let mut timestamp = 0u32;
-    let mut message_id = 0u32;
-    let result = hal_safe_call!(HAL_CAN_ReceiveMessage(&mut message_id as *mut u32, 0u32, data.as_mut_ptr(), &mut len as *mut u8, &mut timestamp as *mut u32));
+    let mut stream_messages: [HAL_CANStreamMessage; 1024] = [HAL_CANStreamMessage { ..Default::default() }; 1024];
+    let mut n_read = 0u32;
+    let result = hal_safe_call!(HAL_CAN_ReadStreamSession(session_handle, &mut stream_messages as *mut HAL_CANStreamMessage, 1024, &mut n_read as *mut u32));
 
     match result {
       Ok(_) => {
-        let message_id: MessageId = message_id.into();
-        let bridged_msg = BridgedCANMessage { id: message_id, timestamp, data: LengthTaggedVec::new(data[0..len as usize].to_vec()) };
-
-        let mut write_buf = VecBitWriter::new();
-        bridged_msg.write(&mut write_buf, ());
-        let mut slice = write_buf.slice();
-        
-        let l = u16::to_le_bytes(slice.len() as u16);
-        let mut slice1 = &l[..];
-
-        // Block on writes to the socket
-
-        while !slice1.is_empty() {
-          match stream.write(slice1) {
-            Ok(0) => anyhow::bail!("Failed to write"),
-            Ok(n) => slice1 = &slice1[n..],
-            Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
-            Err(e) => anyhow::bail!("Write error: {}", e)
+        for msg in &stream_messages[0..n_read as usize] {
+          let message_id: MessageId = msg.messageID.into();
+          let bridged_msg = BridgedCANMessage { id: message_id, timestamp: msg.timeStamp, data: LengthTaggedVec::new(msg.data[0..msg.dataSize as usize].to_vec()) };
+  
+          let mut write_buf = VecBitWriter::new();
+          bridged_msg.write(&mut write_buf, ());
+          let mut slice = write_buf.slice();
+          
+          let l = u16::to_le_bytes(slice.len() as u16);
+          let mut slice1 = &l[..];
+  
+          // Block on writes to the socket
+  
+          while !slice1.is_empty() {
+            match stream.write(slice1) {
+              Ok(0) => anyhow::bail!("Failed to write"),
+              Ok(n) => slice1 = &slice1[n..],
+              Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
+              Err(e) => anyhow::bail!("Write error: {}", e)
+            }
           }
-        }
-
-        while !slice.is_empty() {
-          match stream.write(slice) {
-            Ok(0) => anyhow::bail!("Failed to write"),
-            Ok(n) => slice = &slice[n..],
-            Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
-            Err(e) => anyhow::bail!("Write error: {}", e)
+  
+          while !slice.is_empty() {
+            match stream.write(slice) {
+              Ok(0) => anyhow::bail!("Failed to write"),
+              Ok(n) => slice = &slice[n..],
+              Err(e) if e.kind() == ErrorKind::Interrupted || e.kind() == ErrorKind::WouldBlock => {},
+              Err(e) => anyhow::bail!("Write error: {}", e)
+            }
           }
         }
       },
       Err(_) => ()
     }
+
+    std::thread::sleep(Duration::from_millis(1));
   }
 }
 
@@ -85,8 +87,11 @@ fn start_can_bridge() -> anyhow::Result<()> {
 
   for stream in server.incoming() {
     // Only handle one client at a time, otherwise the process lives forever when GrappleHook is done.
-    handle_client(stream?)?;
-    break;
+    let mut session_handle = 0u32;
+    hal_safe_call!(HAL_CAN_OpenStreamSession(&mut session_handle as *mut u32, 0u32, 0u32, 1024))?;
+    let result = handle_client(session_handle, stream?);
+    unsafe { HAL_CAN_CloseStreamSession(session_handle) };
+    return result;
   }
 
   Ok(())
