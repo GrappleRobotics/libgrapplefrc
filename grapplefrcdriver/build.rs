@@ -38,6 +38,9 @@ fn main() {
     .whitelist_var(SYMBOL_REGEX)
     .default_enum_style(bindgen::EnumVariation::Rust { non_exhaustive: false })
     .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+    .clang_args(&[
+      format!("--target={}", target)    // See: https://github.com/rust-lang/rust-bindgen/issues/1760
+    ])
     .generate()
     .expect("Unable to generate bindings");
 
