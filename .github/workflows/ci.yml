@@ -169,7 +169,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-          architecture: ${{ matrix.target }}
       - name: Install Clang
         run: sudo apt-get update && sudo apt-get install -y libclang1-15 clang llvm gcc-multilib
       - name: Prepare Rust Libs
@@ -178,7 +177,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release -m grpl-py/Cargo.toml
+          args: --release -m grpl-py/Cargo.toml -i 3.12
           sccache: 'true'
           manylinux: auto
 
@@ -196,7 +195,6 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-          architecture: ${{ matrix.target }}
       - name: Setup Rust
         uses: ATiltedTree/setup-rust@v1
         with:
@@ -209,7 +207,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release -m grpl-py/Cargo.toml
+          args: --release -m grpl-py/Cargo.toml -i 3.12
           sccache: 'true'
 
   # macos-py:
