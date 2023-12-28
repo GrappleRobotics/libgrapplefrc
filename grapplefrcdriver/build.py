@@ -6,7 +6,7 @@ import zipfile
 NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2024/roborio/bin")
 
 # TODO: Load from cargo metadata
-VERSION = "2024.0.0-beta3"
+VERSION = "2024.0.0-beta6"
 
 def run(*cmd):
   env = os.environ.copy()
@@ -93,16 +93,25 @@ def build(platform):
   # Then everything else
   files = {}
   if "windows" in platform:
-    files = { 'grapplefrcdriver.dll': 'grapplefrcdriver.dll', 'grapplefrcdriver.dll.lib': 'grapplefrcdriver.lib', 'grapplefrcdriver.pdb': 'grapplefrcdriver.pdb' }
+    files = {
+      'shared': { 'grapplefrcdriver.dll': 'grapplefrcdriver.dll', 'grapplefrcdriver.dll.lib': 'grapplefrcdriver.lib', 'grapplefrcdriver.pdb': 'grapplefrcdriver.pdb' },
+    }
   elif "osx" in platform:
-    files = { 'libgrapplefrcdriver.dylib': 'libgrapplefrcdriver.dylib' }
+    files = {
+      'shared': { 'libgrapplefrcdriver.dylib': 'libgrapplefrcdriver.dylib' }
+    }
   else:
-    files = { 'libgrapplefrcdriver.so': 'libgrapplefrcdriver.so' }
+    files = {
+      'shared': { 'libgrapplefrcdriver.so': 'libgrapplefrcdriver.so' },
+      'static': { 'libgrapplefrcdriver.a': 'libgrapplefrcdriver.a' }
+    }
 
-  for (mode, classifier) in [("debug", f"{classifierBase}debug"), ("release", classifierBase)]:
-    with zipfile.ZipFile(f"{outdir}/{identifier}-{VERSION}-{classifier}.zip", "w") as zf:
-      for (fkey, fname) in files.items():
-        zf.write(f"target/{triple}/{mode}/{fkey}", f"{details['path']}/shared/{fname}")
+  for (linkage, linkageClassifier) in [("shared", ""), ("static", "static")]:
+    for (mode, classifier) in [("debug", f"{classifierBase}{linkageClassifier}debug"), ("release", f"{classifierBase}{linkageClassifier}")]:
+      if linkage in files:
+        with zipfile.ZipFile(f"{outdir}/{identifier}-{VERSION}-{classifier}.zip", "w") as zf:
+          for (fkey, fname) in files[linkage].items():
+            zf.write(f"target/{triple}/{mode}/{fkey}", f"{details['path']}/{linkage}/{fname}")
 
   # And lastly, the .pom
   with open(f"{outdir}/{identifier}-{VERSION}.pom", "w") as f:

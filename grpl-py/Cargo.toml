@@ -1,19 +1,15 @@
 [package]
-name = "grapplefrcdriver"
+name = "grpl-py"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
-name = "grapplefrcdriver"
-crate-type = ["lib", "cdylib", "staticlib"]
+name = "grpl"
+crate-type = ["cdylib"]
 
 [dependencies]
-anyhow = "1.0.75"
+pyo3 = "0.19.0"
+grapplefrcdriver = { path = "../grapplefrcdriver", version = "0.1.0" }
 grapple-frc-msgs = "~2024.0.6"
-jni = "0.21.1"
 
-[build-dependencies]
-cbindgen = "0.26.0"
-bindgen = "0.53.1"
