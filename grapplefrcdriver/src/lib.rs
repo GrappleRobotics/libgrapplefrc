@@ -4,6 +4,8 @@
 #![allow(deref_nullptr)]
 #![allow(rustdoc::broken_intra_doc_links)]
 
+extern crate alloc;
+
 use std::{cell::RefCell, ffi::{c_char, CString, c_int}, ptr};
 
 use jni::JNIEnv;

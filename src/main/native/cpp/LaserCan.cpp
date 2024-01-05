@@ -15,15 +15,15 @@ LaserCan::~LaserCan() {
 }
 
 std::optional<LaserCanMeasurement> LaserCan::get_measurement() const {
-  return conv_opt(ffi::lasercan_get_status(_handle)._0);
+  return conv_opt(ffi::lasercan_get_measurement(_handle)._0);
 }
 
 int LaserCan::set_ranging_mode(LaserCanRangingMode mode) {
-  return wrap_error(ffi::lasercan_set_range(_handle, mode == LaserCanRangingMode::Long));
+  return wrap_error(ffi::lasercan_set_range(_handle, mode));
 }
 
 int LaserCan::set_timing_budget(LaserCanTimingBudget budget) {
-  return wrap_error(ffi::lasercan_set_timing_budget(_handle, (uint8_t)budget));
+  return wrap_error(ffi::lasercan_set_timing_budget(_handle, budget));
 }
 
 int LaserCan::set_roi(LaserCanROI roi) {

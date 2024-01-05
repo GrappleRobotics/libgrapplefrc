@@ -1,6 +1,6 @@
-use std::{net::{TcpListener, TcpStream}, io::{Read, Write, ErrorKind}, time::Duration};
+use std::{net::{TcpListener, TcpStream}, io::{Read, Write, ErrorKind}, time::Duration, borrow::Cow};
 
-use grapple_frc_msgs::{bridge::BridgedCANMessage, binmarshal::{BitView, BinMarshal, VecBitWriter, LengthTaggedVec, BitWriter}, MessageId};
+use grapple_frc_msgs::{bridge::BridgedCANMessage, binmarshal::{BitView, VecBitWriter, BitWriter, Demarshal, Marshal, LengthTaggedPayload}, MessageId};
 
 use crate::{hal_safe_call, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT, HAL_CAN_OpenStreamSession, HAL_CANStreamMessage, HAL_CAN_ReadStreamSession, HAL_CAN_CloseStreamSession};
 
@@ -23,11 +23,13 @@ fn handle_client(session_handle: u32, mut stream: TcpStream) -> anyhow::Result<(
       if (read_buf.len() - 2) >= msg_len {
         let mut next_buf = read_buf.split_off(msg_len + 2);
 
-        let bridged_msg = BridgedCANMessage::read(&mut BitView::new(&read_buf[2..]), ()).ok_or(anyhow::anyhow!("Invalid Message!"))?;
+        let bridged_msg = BridgedCANMessage::read(&mut BitView::new(&read_buf[2..]), ()).map_err(|e| anyhow::anyhow!("Invalid Message! {:?}", e))?;
+        let r = bridged_msg.data.as_ref();
+        let msg_data = r.as_ref();
         hal_safe_call!(HAL_CAN_SendMessage(
           bridged_msg.id.into(),
-          bridged_msg.data.0.as_slice().as_ptr(),
-          bridged_msg.data.0.len() as u8,
+          msg_data.as_ptr(),
+          msg_data.len() as u8,
           HAL_CAN_SEND_PERIOD_NO_REPEAT as i32
         ))?;
 
@@ -45,10 +47,10 @@ fn handle_client(session_handle: u32, mut stream: TcpStream) -> anyhow::Result<(
       Ok(_) => {
         for msg in &stream_messages[0..n_read as usize] {
           let message_id: MessageId = msg.messageID.into();
-          let bridged_msg = BridgedCANMessage { id: message_id, timestamp: msg.timeStamp, data: LengthTaggedVec::new(msg.data[0..msg.dataSize as usize].to_vec()) };
+          let bridged_msg = BridgedCANMessage { id: message_id, timestamp: msg.timeStamp, data: Cow::Borrowed(Into::<&LengthTaggedPayload<_>>::into(&msg.data[0..msg.dataSize as usize])).into() };
   
           let mut write_buf = VecBitWriter::new();
-          bridged_msg.write(&mut write_buf, ());
+          bridged_msg.write(&mut write_buf, ()).ok();
           let mut slice = write_buf.slice();
           
           let l = u16::to_le_bytes(slice.len() as u16);

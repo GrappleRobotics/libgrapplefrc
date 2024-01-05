@@ -10,7 +10,7 @@ void Robot::RobotInit() {
   lc = new grpl::LaserCan(0);
   if (lc->set_ranging_mode(grpl::LaserCanRangingMode::Long))
     std::cout << "ERROR 1" << std::endl;
-  if (lc->set_timing_budget(grpl::LaserCanTimingBudget::TimingBudget100ms))
+  if (lc->set_timing_budget(grpl::LaserCanTimingBudget::TB50ms))
     std::cout << "ERROR 2" << std::endl;
   if (lc->set_roi(grpl::LaserCanROI{ 8, 8, 16, 16 }))
     std::cout << "ERROR 3" << std::endl;

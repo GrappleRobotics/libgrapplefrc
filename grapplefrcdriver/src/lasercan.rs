@@ -1,6 +1,6 @@
-use std::{time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}};
+use std::{time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}, u8};
 
-use grapple_frc_msgs::{grapple::{errors::{CowStr, GrappleError}, lasercan::{LaserCanStatusFrame, LaserCanMessage, LaserCanRoi, LaserCanRoiU4}, GrappleDeviceMessage, Request}, binmarshal::HasTags, request_factory};
+use grapple_frc_msgs::{grapple::{Request, errors::GrappleError, lasercan::{LaserCanMessage, LaserCanRoi, LaserCanRoiU4, LaserCanMeasurement, LaserCanTimingBudget, LaserCanRangingMode}, GrappleDeviceMessage, DEVICE_TYPE_DISTANCE_SENSOR}, request_factory};
 use jni::objects::{JClass, JObject, JValueGen};
 use jni::sys::{jint, jlong, jobject, jboolean};
 use jni::JNIEnv;
@@ -8,32 +8,32 @@ use jni::JNIEnv;
 use crate::{with_err, COptional, JNIResultExtension, can::GrappleCanDriver};
 
 pub trait LaserCanImpl {
-  fn status(&mut self) -> Option<LaserCanStatusFrame>;
-  fn set_timing_budget(&mut self, budget: u8) -> anyhow::Result<()>;
+  fn get_measurement(&mut self) -> Option<LaserCanMeasurement>;
+  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> anyhow::Result<()>;
   fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()>;
-  fn set_range(&mut self, long: bool) -> anyhow::Result<()>;
+  fn set_range(&mut self, mode: LaserCanRangingMode) -> anyhow::Result<()>;
 }
 
 pub struct NativeLaserCan {
   driver: GrappleCanDriver,
-  last_status_frame: Option<(Instant, LaserCanStatusFrame)>,
+  last_status_frame: Option<(Instant, LaserCanMeasurement)>,
 }
 
 impl NativeLaserCan {
   pub fn new(can_id: u8) -> Self {
     Self {
-      driver: GrappleCanDriver::new(can_id, <GrappleDeviceMessage as HasTags>::Tags::DistanceSensor.to_tag()),
+      driver: GrappleCanDriver::new(can_id, DEVICE_TYPE_DISTANCE_SENSOR),
       last_status_frame: None
     }
   }
 }
 
 impl LaserCanImpl for NativeLaserCan {
-  fn status(&mut self) -> Option<LaserCanStatusFrame> {
+  fn get_measurement(&mut self) -> Option<LaserCanMeasurement> {
     self.driver.spin(&mut |_id, msg| {
       match msg {
-        GrappleDeviceMessage::DistanceSensor(LaserCanMessage::Status(status)) => {
-          self.last_status_frame = Some((Instant::now(), status));
+        GrappleDeviceMessage::DistanceSensor(LaserCanMessage::Measurement(measurement)) => {
+          self.last_status_frame = Some((Instant::now(), measurement));
           false
         },
         _ => true
@@ -53,7 +53,7 @@ impl LaserCanImpl for NativeLaserCan {
     }
   }
 
-  fn set_timing_budget(&mut self, budget: u8) -> anyhow::Result<()> {
+  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> anyhow::Result<()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetTimingBudget(data)));
     decode(self.driver.request(encode(budget), 500)?)??;
     Ok(())
@@ -65,9 +65,9 @@ impl LaserCanImpl for NativeLaserCan {
     Ok(())
   }
 
-  fn set_range(&mut self, long: bool) -> anyhow::Result<()> {
+  fn set_range(&mut self, mode: LaserCanRangingMode) -> anyhow::Result<()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRange(data)));
-    decode(self.driver.request(encode(long), 500)?)??;
+    decode(self.driver.request(encode(mode), 500)?)??;
     Ok(())
   }
 }
@@ -111,15 +111,15 @@ pub extern "C" fn lasercan_free(lc: *mut LaserCanDevice) {
 
 // Need to wrap this so MSVC doesn't complain about using C++ generics in extern "C"
 #[repr(C)]
-pub struct MaybeStatusFrame(COptional<LaserCanStatusFrame>);
+pub struct MaybeMeasurement(COptional<LaserCanMeasurement>);
 
 #[no_mangle]
-pub extern "C" fn lasercan_get_status(inst: *mut LaserCanDevice) -> MaybeStatusFrame {
-  MaybeStatusFrame(unsafe { (*inst).status().into() })
+pub extern "C" fn lasercan_get_measurement(inst: *mut LaserCanDevice) -> MaybeMeasurement {
+  MaybeMeasurement(unsafe { (*inst).get_measurement().into() })
 }
 
 #[no_mangle]
-pub extern "C" fn lasercan_set_timing_budget(inst: *mut LaserCanDevice, budget: u8) -> c_int {
+pub extern "C" fn lasercan_set_timing_budget(inst: *mut LaserCanDevice, budget: LaserCanTimingBudget) -> c_int {
   unsafe {
     with_err((*inst).set_timing_budget(budget))
   }
@@ -133,9 +133,9 @@ pub extern "C" fn lasercan_set_roi(inst: *mut LaserCanDevice, roi: LaserCanRoi) 
 }
 
 #[no_mangle]
-pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, long: bool) -> c_int {
+pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, mode: LaserCanRangingMode) -> c_int {
   unsafe {
-    with_err((*inst).set_range(long))
+    with_err((*inst).set_range(mode))
   }
 }
 
@@ -171,7 +171,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_getMeasurement<'local>(
   inst: JObject<'local>,
 ) -> jobject {
   let lc = get_handle(&mut env, inst);
-  let status = unsafe { (*lc).status() };
+  let status = unsafe { (*lc).get_measurement() };
 
   match status {
     None => JObject::null().into_raw(),
@@ -189,8 +189,8 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_getMeasurement<'local>(
         JValueGen::Int(status.status as jint),
         JValueGen::Int(status.distance_mm as jint),
         JValueGen::Int(status.ambient as jint),
-        JValueGen::Bool(status.long as jboolean),
-        JValueGen::Int(status.budget_ms as jint),
+        JValueGen::Bool((status.mode == LaserCanRangingMode::Long) as jboolean),
+        JValueGen::Int(status.budget as u8 as jint),
         JValueGen::Object(&roi)
       ]).unwrap().into_raw()
     }
@@ -204,7 +204,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setRangingMode<'local>(
   is_long: bool,
 ) {
   let lc = get_handle(&mut env, inst);
-  unsafe { (*lc).set_range(is_long).with_jni_throw(&mut env, |_| {}) }
+  unsafe { (*lc).set_range(if is_long { LaserCanRangingMode::Long } else { LaserCanRangingMode::Short }).with_jni_throw(&mut env, |_| {}) }
 }
 
 #[no_mangle]
@@ -214,7 +214,13 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setTimingBudget<'local>(
   budget: jint,
 ) {
   let lc = get_handle(&mut env, inst);
-  unsafe { (*lc).set_timing_budget(budget as u8).with_jni_throw(&mut env, |_| {}) }
+  unsafe { (*lc).set_timing_budget(match budget as u8 {
+    20 => LaserCanTimingBudget::TB20ms,
+    33 => LaserCanTimingBudget::TB33ms,
+    50 => LaserCanTimingBudget::TB50ms,
+    100 => LaserCanTimingBudget::TB100ms,
+    _ => panic!("Invalid Timing Budget")
+  }).with_jni_throw(&mut env, |_| {}) }
 }
 
 #[no_mangle]

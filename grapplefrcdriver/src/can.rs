@@ -1,23 +1,25 @@
 use std::time::{Instant, Duration};
 
-use grapple_frc_msgs::{grapple::{fragments::FragmentReassembler, GrappleMessageId, GrappleDeviceMessage, MaybeFragment}, MessageId, binmarshal::{BitView, BinMarshal}, Validate};
+use bounded_static::IntoBoundedStatic;
+use grapple_frc_msgs::{grapple::{fragments::{FragmentReassembler, FragmentReassemblerRx, FragmentReassemblerTx}, GrappleMessageId, GrappleDeviceMessage, MaybeFragment}, MessageId, binmarshal::{BitView, Demarshal, MarshalUpdate}, Validate};
 
 use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT};
 
 pub struct GrappleCanDriver {
   can_id: u8,
   device_type: u8,
-  fragment_id: u8,
-  reassembler: FragmentReassembler
+  reassembler_rx: FragmentReassemblerRx,
+  reassembler_tx: FragmentReassemblerTx
 }
 
 impl GrappleCanDriver {
   pub fn new(can_id: u8, device_type: u8) -> Self {
+    let (rx, tx) = FragmentReassembler::new(1000, 8).split();
     Self {
       can_id,
       device_type,
-      fragment_id: 0,
-      reassembler: FragmentReassembler::new(1000),
+      reassembler_rx: rx,
+      reassembler_tx: tx,
     }
   }
 
@@ -54,18 +56,19 @@ impl GrappleCanDriver {
           let this_message_id: MessageId = message_id.into();
           let msg = MaybeFragment::read(&mut view, this_message_id.into());
           match msg {
-            Some(msg) => {
-              match self.reassembler.defragment(timestamp as i64, &this_message_id, msg) {
-                Some(m) => {
+            Ok(msg) => {
+              let mut storage = Vec::with_capacity(128);
+              match self.reassembler_rx.defragment(timestamp as i64, &this_message_id, msg, &mut storage) {
+                Ok(Some(m)) => {
                   let cont = consumer(this_message_id.into(), m);
                   if !cont {
                     break;
                   }
                 },
-                None => (),
+                _ => (),
               }
             },
-            None => (),
+            _ => (),
           }
         },
         Err(_) => break
@@ -77,9 +80,9 @@ impl GrappleCanDriver {
     msg.validate().map_err(|e| anyhow::anyhow!("{}", e))?;
 
     let mut msgs = vec![];
-    FragmentReassembler::maybe_fragment(self.can_id, msg, self.fragment_id.wrapping_add(1), &mut |id, buf| {
+    self.reassembler_tx.maybe_fragment(self.can_id, msg, &mut |id, buf| {
       msgs.push((id, buf.to_vec()));
-    });
+    }).ok();
 
     for (id, buf) in msgs {
       hal_safe_call!(HAL_CAN_SendMessage(id.into(), buf.as_ptr(), buf.len() as u8, HAL_CAN_SEND_PERIOD_NO_REPEAT as i32))?;
@@ -102,7 +105,7 @@ impl GrappleCanDriver {
 
       self.spin(&mut |received_id, received_msg| {
         if received_id == complement_id {
-          ret = Some(received_msg);
+          ret = Some(received_msg.into_static());
           false
         } else {
           true

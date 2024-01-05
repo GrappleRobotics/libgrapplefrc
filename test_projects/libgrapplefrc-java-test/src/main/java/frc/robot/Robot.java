@@ -18,7 +18,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    lasercan = new LaserCan(0);
+    lasercan = new LaserCan(1);
     lasercan.setRangingMode(LaserCan.RangingMode.SHORT);
     lasercan.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16));
     lasercan.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
