@@ -7,6 +7,12 @@ use jni::JNIEnv;
 
 use crate::{with_err, COptional, JNIResultExtension, can::GrappleCanDriver};
 
+pub const LASERCAN_STATUS_VALID_MEASUREMENT: u8 = 0;
+pub const LASERCAN_STATUS_NOISE_ISSUE: u8 = 1;
+pub const LASERCAN_STATUS_WEAK_SIGNAL: u8 = 2;
+pub const LASERCAN_STATUS_OUT_OF_BOUNDS: u8 = 4;
+pub const LASERCAN_STATUS_WRAPAROUND: u8 = 7;
+
 pub trait LaserCanImpl {
   fn get_measurement(&mut self) -> Option<LaserCanMeasurement>;
   fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> anyhow::Result<()>;
@@ -73,7 +79,7 @@ impl LaserCanImpl for NativeLaserCan {
 }
 
 pub struct LaserCanDevice {
-  backend: Box<dyn LaserCanImpl>
+  backend: Box<dyn LaserCanImpl + Send>
 }
 
 impl LaserCanDevice {
@@ -83,7 +89,7 @@ impl LaserCanDevice {
 }
 
 impl Deref for LaserCanDevice {
-  type Target = Box<dyn LaserCanImpl>;
+  type Target = Box<dyn LaserCanImpl + Send>;
 
   fn deref(&self) -> &Self::Target {
     &self.backend

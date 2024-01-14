@@ -1,0 +1,15 @@
+[package]
+name = "grplpyfrc"
+version = "2024.1.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "grplpyfrc"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "~0.19.0" }
+grapplefrcdriver = { version = "2024.1.1", path = "../grapplefrcdriver" }
+anyhow = "1.0.79"
+grapple-frc-msgs = { version = "2024.3.2", features = ["pyo3"] }

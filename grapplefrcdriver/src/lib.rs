@@ -17,6 +17,8 @@ pub mod can;
 pub mod can_bridge;
 pub mod lasercan;
 
+pub use grapple_frc_msgs as msgs;
+
 // From https://michael-f-bryan.github.io/rust-ffi-guide/errors/return_types.html
 
 thread_local!{

@@ -1,0 +1,6 @@
+rustup
+build-essential
+libclang
+export PYO3_CROSS_LIB_DIR=/build/crosspy/lib/python3.12/
+export PYO3_PYTHON=python3.12
+export PYO3_CROSS_PYTHON_VERSION=3.12
