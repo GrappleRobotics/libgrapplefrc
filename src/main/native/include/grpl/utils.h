@@ -25,7 +25,7 @@ namespace grpl {
   static constexpr int GRAPPLE_ERROR_GENERIC = 0xFF;
 
   template<typename T>
-  constexpr std::optional<T> conv_opt(libgrapplefrc::ffi::COptional<T> opt) {
+  inline std::optional<T> conv_opt(libgrapplefrc::ffi::COptional<T> opt) {
     if (opt.tag == libgrapplefrc::ffi::COptional<T>::Tag::Some) {
       return opt.some._0;
     } else {
@@ -34,7 +34,7 @@ namespace grpl {
   }
 
   template<typename T>
-  constexpr grpl::expected<T, GrappleError> conv_result(libgrapplefrc::ffi::CGrappleResult<T> opt) {
+  inline grpl::expected<T, GrappleError> conv_result(libgrapplefrc::ffi::CGrappleResult<T> opt) {
     if (opt.tag == libgrapplefrc::ffi::CGrappleResult<T>::Tag::Ok) {
       return opt.ok._0;
     } else {
