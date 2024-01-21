@@ -101,6 +101,6 @@ namespace grpl {
 
   private:
     uint8_t _can_id;
-    libgrapplefrc::ffi::LaserCanDevice *_handle;
+    libgrapplefrc::ffi::LaserCAN *_handle;
   };
 }
