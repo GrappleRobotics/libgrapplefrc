@@ -79,15 +79,15 @@ impl<T> From<Option<T>> for COptional<T> {
 }
 
 pub trait JNIResultExtension<T> {
-  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, f: F);
+  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F);
 }
 
 impl<T> JNIResultExtension<T> for anyhow::Result<T> {
-  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, f: F) {
+  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F) {
     match self {
       Ok(v) => f(v),
       Err(e) => {
-        let cls = env.find_class("au/grapplerobotics/NativeException").unwrap();
+        let cls = env.find_class(&format!("au/grapplerobotics/{}", exc)).unwrap();
         env.throw_new(cls, format!("{}", e)).unwrap();
       },
     }

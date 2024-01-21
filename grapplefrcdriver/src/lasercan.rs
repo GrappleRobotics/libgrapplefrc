@@ -204,7 +204,10 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setRangingMode<'local>(
   is_long: bool,
 ) {
   let lc = get_handle(&mut env, inst);
-  unsafe { (*lc).set_range(if is_long { LaserCanRangingMode::Long } else { LaserCanRangingMode::Short }).with_jni_throw(&mut env, |_| {}) }
+  unsafe {
+    (*lc).set_range(if is_long { LaserCanRangingMode::Long } else { LaserCanRangingMode::Short })
+      .with_jni_throw(&mut env, "ConfigurationFailedException", |_| {})
+  }
 }
 
 #[no_mangle]
@@ -220,7 +223,7 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setTimingBudget<'local>(
     50 => LaserCanTimingBudget::TB50ms,
     100 => LaserCanTimingBudget::TB100ms,
     _ => panic!("Invalid Timing Budget")
-  }).with_jni_throw(&mut env, |_| {}) }
+  }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {}) }
 }
 
 #[no_mangle]
@@ -239,6 +242,6 @@ pub extern "system" fn Java_au_grapplerobotics_LaserCan_setRoi<'local>(
       y: LaserCanRoiU4(y as u8),
       w: LaserCanRoiU4(w as u8),
       h: LaserCanRoiU4(h as u8),
-    }).with_jni_throw(&mut env, |_| {})
+    }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {})
   }
 }

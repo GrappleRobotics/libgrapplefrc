@@ -5,6 +5,7 @@
 package frc.robot;
 
 import au.grapplerobotics.LaserCan;
+import au.grapplerobotics.ConfigurationFailedException;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 /**
@@ -18,10 +19,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    lasercan = new LaserCan(1);
-    lasercan.setRangingMode(LaserCan.RangingMode.SHORT);
-    lasercan.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16));
-    lasercan.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
+    lasercan = new LaserCan(0);
+    try {
+      lasercan.setRangingMode(LaserCan.RangingMode.SHORT);
+      lasercan.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16));
+      lasercan.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
+    } catch (ConfigurationFailedException e) {
+      System.out.println("Configuration Failed!");
+    }
   }
 
   @Override
@@ -29,8 +34,8 @@ public class Robot extends TimedRobot {
     LaserCan.Measurement status = lasercan.getMeasurement();
     if (status != null && status.status == 0)
       System.out.println("The target is " + status.distance_mm + "mm away!");
-    else
-      System.out.println("Oh no! The target is out of range, or we can't get a reliable measurement!");
+    // else
+    //   System.out.println("Oh no! The target is out of range, or we can't get a reliable measurement!");
   }
 
   @Override

@@ -186,7 +186,7 @@ public class LaserCan implements AutoCloseable {
    * Set the ranging mode for the sensor.
    * @see RangingMode
   */
-  public void setRangingMode(RangingMode mode) {
+  public void setRangingMode(RangingMode mode) throws ConfigurationFailedException {
     setRangingMode(mode == RangingMode.LONG);
   }
 
@@ -194,7 +194,7 @@ public class LaserCan implements AutoCloseable {
    * Set the timing budget for the sensor.
    * @see TimingBudget
   */
-  public void setTimingBudget(TimingBudget budget) {
+  public void setTimingBudget(TimingBudget budget) throws ConfigurationFailedException {
     switch (budget) {
       case TIMING_BUDGET_20MS:
         setTimingBudget(20);
@@ -215,13 +215,13 @@ public class LaserCan implements AutoCloseable {
    * Set the region of interest for the sensor.
    * @see RegionOfInterest
    */
-  public void setRegionOfInterest(RegionOfInterest roi) {
+  public void setRegionOfInterest(RegionOfInterest roi) throws ConfigurationFailedException {
     setRoi(roi.x, roi.y, roi.w, roi.h);
   }
 
-  native void setRangingMode(boolean is_long);
-  native void setTimingBudget(int budget);
-  native void setRoi(int x, int y, int w, int h);
+  native void setRangingMode(boolean is_long) throws ConfigurationFailedException;
+  native void setTimingBudget(int budget) throws ConfigurationFailedException;
+  native void setRoi(int x, int y, int w, int h) throws ConfigurationFailedException;
 
   @Override
   public void close() throws Exception {
