@@ -1,17 +1,18 @@
-use std::{time::{Duration, Instant}, ffi::c_int, ops::{DerefMut, Deref}, u8};
+use std::{time::{Duration, Instant}, ops::{DerefMut, Deref}};
 
-use grapple_frc_msgs::{grapple::{Request, errors::GrappleError, lasercan::{LaserCanMessage, LaserCanRoi, LaserCanRoiU4, LaserCanMeasurement, LaserCanTimingBudget, LaserCanRangingMode}, GrappleDeviceMessage, DEVICE_TYPE_DISTANCE_SENSOR}, request_factory};
+use bounded_static::ToBoundedStatic;
+use grapple_frc_msgs::{grapple::{Request, errors::{GrappleError, GrappleResult}, lasercan::{LaserCanMessage, LaserCanRoi, LaserCanRoiU4, LaserCanMeasurement, LaserCanTimingBudget, LaserCanRangingMode}, GrappleDeviceMessage, DEVICE_TYPE_DISTANCE_SENSOR}, request_factory};
 use jni::objects::{JClass, JObject, JValueGen};
 use jni::sys::{jint, jlong, jobject, jboolean};
 use jni::JNIEnv;
 
-use crate::{with_err, COptional, JNIResultExtension, can::GrappleCanDriver};
+use crate::{COptional, JNIResultExtension, can::GrappleCanDriver, UnitCGrappleResult};
 
 pub trait LaserCanImpl {
   fn get_measurement(&mut self) -> Option<LaserCanMeasurement>;
-  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> anyhow::Result<()>;
-  fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()>;
-  fn set_range(&mut self, mode: LaserCanRangingMode) -> anyhow::Result<()>;
+  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> GrappleResult<'static, ()>;
+  fn set_roi(&mut self, roi: LaserCanRoi) -> GrappleResult<'static, ()>;
+  fn set_range(&mut self, mode: LaserCanRangingMode) -> GrappleResult<'static, ()>;
 }
 
 pub struct NativeLaserCan {
@@ -53,21 +54,24 @@ impl LaserCanImpl for NativeLaserCan {
     }
   }
 
-  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> anyhow::Result<()> {
+  fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetTimingBudget(data)));
-    decode(self.driver.request(encode(budget), 500)?)??;
+    decode(self.driver.request(encode(budget), 500)?)
+      .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
 
-  fn set_roi(&mut self, roi: LaserCanRoi) -> anyhow::Result<()> {
+  fn set_roi(&mut self, roi: LaserCanRoi) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRoi(data)));
-    decode(self.driver.request(encode(roi), 500)?)??;
+    decode(self.driver.request(encode(roi), 500)?)
+      .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
 
-  fn set_range(&mut self, mode: LaserCanRangingMode) -> anyhow::Result<()> {
+  fn set_range(&mut self, mode: LaserCanRangingMode) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRange(data)));
-    decode(self.driver.request(encode(mode), 500)?)??;
+    decode(self.driver.request(encode(mode), 500)?)
+      .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
 }
@@ -119,23 +123,23 @@ pub extern "C" fn lasercan_get_measurement(inst: *mut LaserCanDevice) -> MaybeMe
 }
 
 #[no_mangle]
-pub extern "C" fn lasercan_set_timing_budget(inst: *mut LaserCanDevice, budget: LaserCanTimingBudget) -> c_int {
+pub extern "C" fn lasercan_set_timing_budget(inst: *mut LaserCanDevice, budget: LaserCanTimingBudget) -> UnitCGrappleResult {
   unsafe {
-    with_err((*inst).set_timing_budget(budget))
+    UnitCGrappleResult((*inst).set_timing_budget(budget).map(Into::into).into())
   }
 }
 
 #[no_mangle]
-pub extern "C" fn lasercan_set_roi(inst: *mut LaserCanDevice, roi: LaserCanRoi) -> c_int {
+pub extern "C" fn lasercan_set_roi(inst: *mut LaserCanDevice, roi: LaserCanRoi) -> UnitCGrappleResult {
   unsafe {
-    with_err((*inst).set_roi(roi))
+    UnitCGrappleResult((*inst).set_roi(roi).map(Into::into).into())
   }
 }
 
 #[no_mangle]
-pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, mode: LaserCanRangingMode) -> c_int {
+pub extern "C" fn lasercan_set_range(inst: *mut LaserCanDevice, mode: LaserCanRangingMode) -> UnitCGrappleResult {
   unsafe {
-    with_err((*inst).set_range(mode))
+    UnitCGrappleResult((*inst).set_range(mode).map(Into::into).into())
   }
 }
 

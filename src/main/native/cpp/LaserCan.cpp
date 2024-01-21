@@ -18,14 +18,14 @@ std::optional<LaserCanMeasurement> LaserCan::get_measurement() const {
   return conv_opt(ffi::lasercan_get_measurement(_handle)._0);
 }
 
-int LaserCan::set_ranging_mode(LaserCanRangingMode mode) {
-  return wrap_error(ffi::lasercan_set_range(_handle, mode));
+grpl::expected<grpl::empty, GrappleError> LaserCan::set_ranging_mode(LaserCanRangingMode mode) {
+  return conv_result(ffi::lasercan_set_range(_handle, mode)._0);
 }
 
-int LaserCan::set_timing_budget(LaserCanTimingBudget budget) {
-  return wrap_error(ffi::lasercan_set_timing_budget(_handle, budget));
+grpl::expected<grpl::empty, GrappleError> LaserCan::set_timing_budget(LaserCanTimingBudget budget) {
+  return conv_result(ffi::lasercan_set_timing_budget(_handle, budget)._0);
 }
 
-int LaserCan::set_roi(LaserCanROI roi) {
-  return wrap_error(ffi::lasercan_set_roi(_handle, roi));
+grpl::expected<grpl::empty, GrappleError> LaserCan::set_roi(LaserCanROI roi) {
+  return conv_result(ffi::lasercan_set_roi(_handle, roi)._0);
 }

@@ -1,7 +1,7 @@
-use std::time::{Instant, Duration};
+use std::{time::{Instant, Duration}, borrow::Cow};
 
-use bounded_static::IntoBoundedStatic;
-use grapple_frc_msgs::{grapple::{fragments::{FragmentReassembler, FragmentReassemblerRx, FragmentReassemblerTx}, GrappleMessageId, GrappleDeviceMessage, MaybeFragment}, MessageId, binmarshal::{BitView, Demarshal, MarshalUpdate}, Validate};
+use bounded_static::{IntoBoundedStatic, ToBoundedStatic};
+use grapple_frc_msgs::{grapple::{fragments::{FragmentReassembler, FragmentReassemblerRx, FragmentReassemblerTx}, GrappleMessageId, GrappleDeviceMessage, MaybeFragment, errors::{GrappleResult, GrappleError}}, MessageId, binmarshal::{BitView, Demarshal, MarshalUpdate}, Validate};
 
 use crate::{hal_safe_call, HAL_CAN_ReceiveMessage, HAL_CAN_SendMessage, HAL_CAN_SEND_PERIOD_NO_REPEAT};
 
@@ -76,8 +76,8 @@ impl GrappleCanDriver {
     }
   }
 
-  pub fn send(&mut self, msg: GrappleDeviceMessage) -> anyhow::Result<()> {
-    msg.validate().map_err(|e| anyhow::anyhow!("{}", e))?;
+  pub fn send(&mut self, msg: GrappleDeviceMessage) -> GrappleResult<'static, ()> {
+    msg.validate().map_err(|e| e.to_static())?;
 
     let mut msgs = vec![];
     self.reassembler_tx.maybe_fragment(self.can_id, msg, &mut |id, buf| {
@@ -85,12 +85,13 @@ impl GrappleCanDriver {
     }).ok();
 
     for (id, buf) in msgs {
-      hal_safe_call!(HAL_CAN_SendMessage(id.into(), buf.as_ptr(), buf.len() as u8, HAL_CAN_SEND_PERIOD_NO_REPEAT as i32))?;
+      hal_safe_call!(HAL_CAN_SendMessage(id.into(), buf.as_ptr(), buf.len() as u8, HAL_CAN_SEND_PERIOD_NO_REPEAT as i32))
+        .map_err(|e| GrappleError::Generic(Cow::<str>::Owned(e.to_string()).into()))?;
     }
     Ok(())
   }
 
-  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize) -> anyhow::Result<GrappleDeviceMessage> {
+  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
     let mut id = GrappleMessageId::new(self.can_id);
     msg.update(&mut id);
 
@@ -122,6 +123,6 @@ impl GrappleCanDriver {
       std::thread::sleep(Duration::from_millis(5));
     };
 
-    anyhow::bail!("CAN Request Timed Out! Is your device plugged in and the firmware up to date?");
+    Err(GrappleError::TimedOut(Cow::<str>::Borrowed("CAN Request Timed Out! Is your device plugged in and the firmware up to date?").into()))
   }
 }

@@ -6,9 +6,10 @@
 
 extern crate alloc;
 
-use std::{cell::RefCell, ffi::{c_char, CString, c_int}, ptr};
+use std::ffi::{c_char, CString};
 
-use jni::JNIEnv;
+use grapple_frc_msgs::grapple::errors::GrappleResult;
+use jni::{JNIEnv, objects::{JThrowable, JValue}};
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
@@ -17,50 +18,53 @@ pub mod can;
 pub mod can_bridge;
 pub mod lasercan;
 
-// From https://michael-f-bryan.github.io/rust-ffi-guide/errors/return_types.html
-
-thread_local!{
-  static LAST_ERROR: RefCell<Option<anyhow::Error>> = RefCell::new(None);
+#[repr(C)]
+pub enum CGrappleResult<T> {
+  Ok(T),
+  Err(CGrappleError),
 }
 
-pub fn update_last_error(err: anyhow::Error) {
-  LAST_ERROR.with(|prev| {
-      *prev.borrow_mut() = Some(err);
-  }); 
+#[repr(C)]
+pub struct CGrappleError {
+  pub message: *mut c_char,
+  pub code: u8,
 }
 
-/// Retrieve the most recent error, clearing it in the process.
-pub fn take_last_error() -> Option<anyhow::Error> {
-  LAST_ERROR.with(|prev| prev.borrow_mut().take())
-}
-
-pub fn with_err(result: anyhow::Result<()>) -> c_int {
-  match result {
-    Ok(()) => 0,
-    Err(e) => {
-      update_last_error(e);
-      -1
-    },
+impl<'a, T> From<GrappleResult<'a, T>> for CGrappleResult<T> {
+  fn from(value: GrappleResult<'a, T>) -> Self {
+    match value {
+      Err(e) => {
+        let str = CString::new(format!("{}", e)).unwrap();
+        CGrappleResult::Err(CGrappleError {
+          message: str.into_raw(),
+          code: e.to_error_code()
+        })
+      },
+      Ok(v) => CGrappleResult::Ok(v)
+    }
   }
 }
 
-#[no_mangle]
-pub extern "C" fn last_error() -> *mut c_char {
-  match take_last_error() {
-    Some(err) => {
-      let str = CString::new(format!("{}", err)).unwrap();
-      str.into_raw()
-    },
-    None => ptr::null_mut()
+// Needed because bindgen doesn't have a () type.
+#[repr(C)]
+pub struct Empty { _sentinel: u8 }
+
+impl From<()> for Empty {
+  fn from(_: ()) -> Self {
+    Self { _sentinel: 0x00 }
   }
 }
 
+// Needed because otherwise the generated headers have templates :(
+#[repr(C)]
+pub struct UnitCGrappleResult(CGrappleResult<Empty>);
+
 #[no_mangle]
-pub extern "C" fn free_error(s: *mut c_char) {
-  if s.is_null() {
+pub extern "C" fn free_error(err: CGrappleError) {
+  if err.message.is_null() {
     return;
   }
-  unsafe { drop(CString::from_raw(s)); }
+  unsafe { drop(CString::from_raw(err.message)); }
 }
 
 #[repr(C)]
@@ -82,13 +86,18 @@ pub trait JNIResultExtension<T> {
   fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F);
 }
 
-impl<T> JNIResultExtension<T> for anyhow::Result<T> {
+impl<'a, T> JNIResultExtension<T> for GrappleResult<'a, T> {
   fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F) {
     match self {
       Ok(v) => f(v),
       Err(e) => {
-        let cls = env.find_class(&format!("au/grapplerobotics/{}", exc)).unwrap();
-        env.throw_new(cls, format!("{}", e)).unwrap();
+        // let cls = env.find_class(&format!("au/grapplerobotics/{}", exc)).unwrap();
+        let msg = env.new_string(e.to_string()).unwrap();
+        let ex_obj: JThrowable = env
+          .new_object(&format!("au/grapplerobotics/{}", exc), "(Ljava/lang/String;I)V", &[JValue::Object(&msg), JValue::Int(e.to_error_code() as i32)])
+          .unwrap()
+          .into();
+        env.throw(ex_obj).unwrap();
       },
     }
   }

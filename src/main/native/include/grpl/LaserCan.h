@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include "libgrapplefrcffi.h"
+#include "grpl/utils.h"
 
 namespace grpl {
   /**
@@ -86,17 +87,17 @@ namespace grpl {
     /**
      * Set the ranging mode for the sensor. \see libgrapplefrc::LaserCanRangingMode
     */
-    int set_ranging_mode(LaserCanRangingMode mode);
+    grpl::expected<grpl::empty, GrappleError> set_ranging_mode(LaserCanRangingMode mode);
 
     /**
      * Set the timing budget for the sensor. \see libgrapplefrc::LaserCanTimingBudget
     */
-    int set_timing_budget(LaserCanTimingBudget budget);
+    grpl::expected<grpl::empty, GrappleError> set_timing_budget(LaserCanTimingBudget budget);
 
     /**
      * Set the region of interest for the sensor. \see libgrapplefrc::LaserCanROI
     */
-    int set_roi(LaserCanROI roi);
+    grpl::expected<grpl::empty, GrappleError> set_roi(LaserCanROI roi);
 
   private:
     uint8_t _can_id;

@@ -25,7 +25,7 @@ public class Robot extends TimedRobot {
       lasercan.setRegionOfInterest(new LaserCan.RegionOfInterest(8, 8, 16, 16));
       lasercan.setTimingBudget(LaserCan.TimingBudget.TIMING_BUDGET_33MS);
     } catch (ConfigurationFailedException e) {
-      System.out.println("Configuration Failed!");
+      System.out.println("Configuration Failed! " + e);
     }
   }
 
