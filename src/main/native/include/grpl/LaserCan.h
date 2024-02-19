@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include "libgrapplefrcffi.h"
+#include "grpl/utils.h"
 
 namespace grpl {
   /**
@@ -43,7 +44,7 @@ namespace grpl {
   /**
    * A Measurement obtained from a LaserCAN Sensor.
   */
-  using LaserCanMeasurement = libgrapplefrc::ffi::LaserCanStatusFrame;
+  using LaserCanMeasurement = libgrapplefrc::ffi::LaserCanMeasurement;
 
   /**
    * A Region of Interest for the LaserCAN sensor. The Region of Interest is the target area
@@ -55,31 +56,13 @@ namespace grpl {
   /**
    * The Ranging Mode for the LaserCAN sensor.
   */
-  enum class LaserCanRangingMode {
-    /**
-     * The Long Ranging Mode can be used to identify targets at longer distances
-     * than the short ranging mode (up to 4m), but is more susceptible to ambient
-     * light.
-    */
-    Long,
-    /**
-     * The Short Ranging Mode is used to detect targets at 1.3m and lower. Although 
-     * shorter than the Long ranging mode, this mode is less susceptible to ambient
-     * light.
-    */
-    Short
-  };
+  using LaserCanRangingMode = libgrapplefrc::ffi::LaserCanRangingMode;
 
   /**
    * The Timing Budget for the LaserCAN Sensor. Higher timing budgets provide more accurate
    * and repeatable results, however at a lower rate than smaller timing budgets.
   */
-  enum class LaserCanTimingBudget {
-    TimingBudget20ms = 20,
-    TimingBudget33ms = 33,
-    TimingBudget50ms = 50,
-    TimingBudget100ms = 100,
-  };
+  using LaserCanTimingBudget = libgrapplefrc::ffi::LaserCanTimingBudget;
 
   /**
    * Class for the Grapple Robotics LaserCAN sensor. The LaserCAN is a 0-4m laser ranging 
@@ -104,20 +87,20 @@ namespace grpl {
     /**
      * Set the ranging mode for the sensor. \see libgrapplefrc::LaserCanRangingMode
     */
-    int set_ranging_mode(LaserCanRangingMode mode);
+    grpl::expected<grpl::empty, GrappleError> set_ranging_mode(LaserCanRangingMode mode);
 
     /**
      * Set the timing budget for the sensor. \see libgrapplefrc::LaserCanTimingBudget
     */
-    int set_timing_budget(LaserCanTimingBudget budget);
+    grpl::expected<grpl::empty, GrappleError> set_timing_budget(LaserCanTimingBudget budget);
 
     /**
      * Set the region of interest for the sensor. \see libgrapplefrc::LaserCanROI
     */
-    int set_roi(LaserCanROI roi);
+    grpl::expected<grpl::empty, GrappleError> set_roi(LaserCanROI roi);
 
   private:
     uint8_t _can_id;
-    libgrapplefrc::ffi::LaserCanDevice *_handle;
+    libgrapplefrc::ffi::LaserCAN *_handle;
   };
 }
