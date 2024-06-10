@@ -1,6 +1,6 @@
 [package]
 name = "grapplefrcdriver"
-version = "2024.2.1"
+version = "2024.3.0"
 edition = "2021"
 
 include = [
@@ -24,7 +24,7 @@ simulation = ["dep:grapple-lasercan"]
 [dependencies]
 anyhow = "1.0.75"
 bounded-static = "0.7.0"
-grapple-frc-msgs = "~2024.3.0"
+grapple-frc-msgs = "~2024.4.0"
 grapple-lasercan = { version = "~2024.2.0", optional = true }
 jni = "0.21.1"
 

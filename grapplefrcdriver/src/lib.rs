@@ -17,6 +17,7 @@ pub mod calling;
 pub mod can;
 pub mod can_bridge;
 pub mod lasercan;
+pub mod mitocandria;
 
 #[repr(C)]
 pub enum CGrappleResult<T> {
@@ -66,6 +67,11 @@ pub extern "C" fn free_error(err: CGrappleError) {
   }
   unsafe { drop(CString::from_raw(err.message)); }
 }
+
+#[repr(C)]
+pub struct MaybeDoubleResult(COptional<CGrappleResult<f64>>);
+#[repr(C)]
+pub struct MaybeBoolResult(COptional<CGrappleResult<bool>>);
 
 #[repr(C)]
 pub enum COptional<T> {
