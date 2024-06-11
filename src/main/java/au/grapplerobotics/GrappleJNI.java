@@ -10,7 +10,7 @@ public class GrappleJNI {
   public static final Cleaner cleaner = Cleaner.create();
 
   static boolean libraryLoaded = false;
-  static RuntimeLoader<GrappleJNI> loader = null;
+  // static RuntimeLoader<GrappleJNI> loader = null;
 
   public static class Helper {
     private static AtomicBoolean extractOnStaticLoad = new AtomicBoolean(true);
@@ -27,8 +27,9 @@ public class GrappleJNI {
   static {
     if (Helper.getExtractOnStaticLoad()) {
       try {
-        loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
-        loader.loadLibrary();
+        RuntimeLoader.loadLibrary("grapplefrcdriver");
+        // loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
+        // loader.loadLibrary();
       } catch (IOException ex) {
         ex.printStackTrace();
         System.exit(1);
