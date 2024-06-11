@@ -21,7 +21,7 @@ namespace grpl {
     /**
      * Create a new MitoCANdria.
      * 
-     * \param can_id The CAN ID for the LaserCAN sensor. This ID is unique, and set in GrappleHook.
+     * \param can_id The CAN ID for the MitoCANdria. This ID is unique, and set in GrappleHook.
      *               Note: one ID should be mapped to only one device, or else they will conflict.
     */
     MitoCANdria(uint8_t can_id);

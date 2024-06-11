@@ -7,7 +7,7 @@ use crate::can::GrappleCanDriver;
 
 pub struct MitoCANdria {
   driver: GrappleCanDriver,
-  last_status_frame: Option<(Instant, mitocandria::MitocandriaStatusFrame)>,
+  last_status_frame: Option<(Instant, mitocandria::MitocandriaStatusFrame)>
 }
 
 impl MitoCANdria {
@@ -117,12 +117,9 @@ impl MitoCANdria {
     match status.channels.get(channel as usize) {
       Some(chan) => match chan {
         MitocandriaChannelStatus::NonSwitchable { .. } => Err(GrappleError::FailedAssertion(AsymmetricCow(Cow::Borrowed("Cannot switch a non-switchable channel"))))?,
-        MitocandriaChannelStatus::Switchable { .. } => {
+        MitocandriaChannelStatus::Switchable { .. } | MitocandriaChannelStatus::Adjustable { .. } => {
           self.set_switchable(MitocandriaSwitchableChannelRequest { channel, enabled })
         },
-        MitocandriaChannelStatus::Adjustable { voltage_setpoint, .. } => {
-          self.set_adjustable(MitocandriaAdjustableChannelRequest { channel, enabled, voltage: *voltage_setpoint })
-        }
       },
       None => Err(GrappleError::ParameterOutOfBounds(AsymmetricCow(Cow::Borrowed("Invalid channel!")))),
     }
@@ -136,7 +133,7 @@ impl MitoCANdria {
           Err(GrappleError::FailedAssertion(AsymmetricCow(Cow::Borrowed("Cannot adjust voltage on a non-adjustable channel"))))?
         },
         MitocandriaChannelStatus::Adjustable { .. } => {
-          self.set_adjustable(MitocandriaAdjustableChannelRequest { channel, enabled: false, voltage: (voltage * 1000.0) as u16 })
+          self.set_adjustable(MitocandriaAdjustableChannelRequest { channel, voltage: (voltage * 1000.0) as u16 })
         }
       },
       None => Err(GrappleError::ParameterOutOfBounds(AsymmetricCow(Cow::Borrowed("Invalid channel!")))),
@@ -190,5 +187,161 @@ mod c {
   #[no_mangle]
   pub extern "C" fn mitocandria_set_channel_voltage(inst: *mut MitoCANdria, channel: u8, voltage: f64) -> UnitCGrappleResult {
     unsafe { UnitCGrappleResult((*inst).set_voltage(channel, voltage).map(Into::into).into()) }
+  }
+}
+
+#[cfg(feature = "jni")]
+mod jni {
+  use jni::{objects::{JClass, JObject, JValueGen}, sys::{jdouble, jint, jlong, jobject}, JNIEnv};
+
+  use crate::JNIResultExtension;
+
+use super::MitoCANdria;
+
+  // JNI
+  fn get_handle<'local>(env: &mut JNIEnv<'local>, inst: JObject<'local>) -> *mut MitoCANdria {
+    let handle = env.get_field(inst, "handle", "Lau/grapplerobotics/MitoCANdria$Handle;").unwrap().l().unwrap();
+    env.get_field(handle, "handle", "J").unwrap().j().unwrap() as *mut MitoCANdria
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_init<'local>(
+    mut _env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    can_id: jint,
+  ) -> jlong {
+    let ptr = Box::into_raw(Box::new(MitoCANdria::new(can_id as u8)));
+    return ptr as jlong;
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_free<'local>(
+    mut _env: JNIEnv<'local>,
+    _class: JClass<'local>,
+    handle: jlong,
+  ) {
+    unsafe { drop(Box::from_raw(handle as *mut MitoCANdria)); }
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_getChannelCurrent<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+  ) -> jobject {
+    let mc = get_handle(&mut env, inst);
+    let optcls = env.find_class("java/util/OptionalDouble").unwrap();
+
+    match unsafe { (*mc).get_current(channel as u8) } {
+      Some(v) => {
+        let v = v.with_jni_throw(&mut env, "CouldNotGetException", |v| v);
+        match v {
+          Some(v) => {
+            env.call_static_method(optcls, "of", "(D)Ljava/util/OptionalDouble;", &[JValueGen::Double(v)]).unwrap().l().unwrap().into_raw()
+          },
+          None => JObject::null().into_raw(),   // Doesn't matter, it'll raise an exception
+        }
+      },
+      None => {
+        env.call_static_method(optcls, "empty", "()Ljava/util/OptionalDouble;", &[]).unwrap().l().unwrap().into_raw()
+      },
+    }
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_getChannelEnabled<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+  ) -> jobject {
+    let mc = get_handle(&mut env, inst);
+    let optcls = env.find_class("java/util/OptionalInt").unwrap();
+
+    match unsafe { (*mc).get_enabled(channel as u8) } {
+      Some(v) => {
+        let v = v.with_jni_throw(&mut env, "CouldNotGetException", |v| v);
+        match v {
+          Some(v) => {
+            env.call_static_method(optcls, "of", "(I)Ljava/util/OptionalInt;", &[JValueGen::Int(v as i32)]).unwrap().l().unwrap().into_raw()
+          },
+          None => JObject::null().into_raw(),   // Doesn't matter, it'll raise an exception
+        }
+      },
+      None => {
+        env.call_static_method(optcls, "empty", "()Ljava/util/OptionalInt;", &[]).unwrap().l().unwrap().into_raw()
+      },
+    }
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_getChannelVoltage<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+  ) -> jobject {
+    let mc = get_handle(&mut env, inst);
+    let optcls = env.find_class("java/util/OptionalDouble").unwrap();
+
+    match unsafe { (*mc).get_voltage(channel as u8) } {
+      Some(v) => {
+        let v = v.with_jni_throw(&mut env, "CouldNotGetException", |v| v);
+        match v {
+          Some(v) => {
+            env.call_static_method(optcls, "of", "(D)Ljava/util/OptionalDouble;", &[JValueGen::Double(v)]).unwrap().l().unwrap().into_raw()
+          },
+          None => JObject::null().into_raw(),   // Doesn't matter, it'll raise an exception
+        }
+      },
+      None => {
+        env.call_static_method(optcls, "empty", "()Ljava/util/OptionalDouble;", &[]).unwrap().l().unwrap().into_raw()
+      },
+    }
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_getChannelVoltageSetpoint<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+  ) -> jobject {
+    let mc = get_handle(&mut env, inst);
+    let optcls = env.find_class("java/util/OptionalDouble").unwrap();
+
+    match unsafe { (*mc).get_voltage_setpoint(channel as u8) } {
+      Some(v) => {
+        let v = v.with_jni_throw(&mut env, "CouldNotGetException", |v| v);
+        match v {
+          Some(v) => {
+            env.call_static_method(optcls, "of", "(D)Ljava/util/OptionalDouble;", &[JValueGen::Double(v)]).unwrap().l().unwrap().into_raw()
+          },
+          None => JObject::null().into_raw(),   // Doesn't matter, it'll raise an exception
+        }
+      },
+      None => {
+        env.call_static_method(optcls, "empty", "()Ljava/util/OptionalDouble;", &[]).unwrap().l().unwrap().into_raw()
+      },
+    }
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_setChannelEnabled<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+    enabled: bool,
+  ) {
+    let mc = get_handle(&mut env, inst);
+    unsafe { (*mc).set_enabled(channel as u8, enabled) }.with_jni_throw(&mut env, "ConfigurationFailedException", |_| {});
+  }
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_MitoCANdria_setChannelVoltage<'local>(
+    mut env: JNIEnv<'local>,
+    inst: JObject<'local>,
+    channel: jint,
+    voltage: jdouble,
+  ) {
+    let mc = get_handle(&mut env, inst);
+    unsafe { (*mc).set_voltage(channel as u8, voltage) }.with_jni_throw(&mut env, "ConfigurationFailedException", |_| {});
   }
 }
