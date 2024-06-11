@@ -50,7 +50,7 @@ jobs:
       - name: Build Rust
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
-        run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal --refresh-dependencies --max-workers 1 ${{ matrix.build-options }}
+        run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -106,7 +106,7 @@ jobs:
       - name: Build Rust
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
-        run: ./gradlew publishToMavenLocal --refresh-dependencies ${{ matrix.build-options }}
+        run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
