@@ -46,8 +46,9 @@ public class GrappleJNI {
     if (libraryLoaded) {
       return;
     }
-    loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
-    loader.loadLibrary();
+    // loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
+    // loader.loadLibrary();
+    RuntimeLoader.loadLibrary("grapplefrcdriver");
     libraryLoaded = true;
   }
 }
