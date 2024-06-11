@@ -36,9 +36,7 @@ jobs:
           git config --global --add safe.directory /__w/libgrapplefrc/libgrapplefrc
           git fetch --prune --unshallow
       - name: Setup Rust
-        uses: ATiltedTree/setup-rust@v1
-        with:
-          rust-version: stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Setup Rust Toolchain (Athena)
         run: rustup target add arm-unknown-linux-gnueabi
       - name: Setup Rust Toolchain (Arm32)
@@ -96,9 +94,7 @@ jobs:
           java-version: 17
           architecture: ${{ matrix.architecture }}
       - name: Setup Rust
-        uses: ATiltedTree/setup-rust@v1
-        with:
-          rust-version: stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Setup Rust Toolchain (macOS Arm64)
         run: rustup target add aarch64-apple-darwin
         if: matrix.artifact-name == 'macOS'
