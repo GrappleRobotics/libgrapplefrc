@@ -18,6 +18,7 @@ pub mod can;
 pub mod can_bridge;
 pub mod lasercan;
 pub mod mitocandria;
+pub mod ws_can_bridge;
 
 #[repr(C)]
 pub enum CGrappleResult<T> {

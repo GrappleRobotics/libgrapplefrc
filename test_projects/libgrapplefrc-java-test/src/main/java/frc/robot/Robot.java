@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import au.grapplerobotics.CanBridge;
 import au.grapplerobotics.LaserCan;
 import au.grapplerobotics.ConfigurationFailedException;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -19,6 +20,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+    CanBridge.runWebsocketInBackground(7171);
+
     lasercan = new LaserCan(0);
     try {
       lasercan.setRangingMode(LaserCan.RangingMode.SHORT);
