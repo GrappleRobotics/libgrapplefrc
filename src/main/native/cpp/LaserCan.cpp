@@ -1,8 +1,6 @@
 #include "grpl/LaserCan.h"
 #include "grpl/utils.h"
 
-#include <iostream>
-
 using namespace libgrapplefrc;
 using namespace grpl;
 
