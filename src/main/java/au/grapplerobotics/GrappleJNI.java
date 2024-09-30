@@ -27,6 +27,7 @@ public class GrappleJNI {
   static {
     if (Helper.getExtractOnStaticLoad()) {
       try {
+        // RuntimeLoader.loadLibrary("grapplefrcdriver");
         loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
         loader.loadLibrary();
       } catch (IOException ex) {
@@ -47,6 +48,7 @@ public class GrappleJNI {
     }
     loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
     loader.loadLibrary();
+    // RuntimeLoader.loadLibrary("grapplefrcdriver");
     libraryLoaded = true;
   }
 }

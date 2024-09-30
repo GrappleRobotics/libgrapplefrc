@@ -36,9 +36,7 @@ jobs:
           git config --global --add safe.directory /__w/libgrapplefrc/libgrapplefrc
           git fetch --prune --unshallow
       - name: Setup Rust
-        uses: ATiltedTree/setup-rust@v1
-        with:
-          rust-version: stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Setup Rust Toolchain (Athena)
         run: rustup target add arm-unknown-linux-gnueabi
       - name: Setup Rust Toolchain (Arm32)
@@ -52,7 +50,7 @@ jobs:
       - name: Build Rust
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
-        run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal --max-workers 1 ${{ matrix.build-options }}
+        run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -96,9 +94,7 @@ jobs:
           java-version: 17
           architecture: ${{ matrix.architecture }}
       - name: Setup Rust
-        uses: ATiltedTree/setup-rust@v1
-        with:
-          rust-version: stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Setup Rust Toolchain (macOS Arm64)
         run: rustup target add aarch64-apple-darwin
         if: matrix.artifact-name == 'macOS'
@@ -110,7 +106,7 @@ jobs:
       - name: Build Rust
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
-        run: ./gradlew publishToMavenLocal ${{ matrix.build-options }}
+        run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}

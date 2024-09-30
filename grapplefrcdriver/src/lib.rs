@@ -17,6 +17,8 @@ pub mod calling;
 pub mod can;
 pub mod can_bridge;
 pub mod lasercan;
+pub mod mitocandria;
+pub mod ws_can_bridge;
 
 #[repr(C)]
 pub enum CGrappleResult<T> {
@@ -68,6 +70,11 @@ pub extern "C" fn free_error(err: CGrappleError) {
 }
 
 #[repr(C)]
+pub struct MaybeDoubleResult(COptional<CGrappleResult<f64>>);
+#[repr(C)]
+pub struct MaybeBoolResult(COptional<CGrappleResult<bool>>);
+
+#[repr(C)]
 pub enum COptional<T> {
   None,
   Some(T)
@@ -83,13 +90,13 @@ impl<T> From<Option<T>> for COptional<T> {
 }
 
 pub trait JNIResultExtension<T> {
-  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F);
+  fn with_jni_throw<'local, V, F: FnOnce(T) -> V>(self, env: &mut JNIEnv<'local>, exc: &str, f: F) -> Option<V>;
 }
 
 impl<'a, T> JNIResultExtension<T> for GrappleResult<'a, T> {
-  fn with_jni_throw<'local, F: FnOnce(T)>(self, env: &mut JNIEnv<'local>, exc: &str, f: F) {
+  fn with_jni_throw<'local, V, F: FnOnce(T) -> V>(self, env: &mut JNIEnv<'local>, exc: &str, f: F) -> Option<V> {
     match self {
-      Ok(v) => f(v),
+      Ok(v) => Some(f(v)),
       Err(e) => {
         // let cls = env.find_class(&format!("au/grapplerobotics/{}", exc)).unwrap();
         let msg = env.new_string(e.to_string()).unwrap();
@@ -98,6 +105,7 @@ impl<'a, T> JNIResultExtension<T> for GrappleResult<'a, T> {
           .unwrap()
           .into();
         env.throw(ex_obj).unwrap();
+        None
       },
     }
   }

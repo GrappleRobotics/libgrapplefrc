@@ -190,7 +190,7 @@ use super::LaserCAN;
     let lc = get_handle(&mut env, inst);
     unsafe {
       (*lc).set_range(if is_long { LaserCanRangingMode::Long } else { LaserCanRangingMode::Short })
-        .with_jni_throw(&mut env, "ConfigurationFailedException", |_| {})
+        .with_jni_throw(&mut env, "ConfigurationFailedException", |_| {});
     }
   }
 
@@ -207,7 +207,7 @@ use super::LaserCAN;
       50 => LaserCanTimingBudget::TB50ms,
       100 => LaserCanTimingBudget::TB100ms,
       _ => panic!("Invalid Timing Budget")
-    }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {}) }
+    }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {}) };
   }
 
   #[no_mangle]
@@ -226,7 +226,7 @@ use super::LaserCAN;
         y: LaserCanRoiU4(y as u8),
         w: LaserCanRoiU4(w as u8),
         h: LaserCanRoiU4(h as u8),
-      }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {})
+      }).with_jni_throw(&mut env, "ConfigurationFailedException", |_| {});
     }
   }
 }
