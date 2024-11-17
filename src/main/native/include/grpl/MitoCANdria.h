@@ -27,12 +27,52 @@ namespace grpl {
     MitoCANdria(uint8_t can_id);
     ~MitoCANdria();
 
+    /**
+     * Get the current consumption of a channel, in Amperes, at this point in time.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return std::optional::nullopt if the MitoCANdria is not yet available on the bus.
+     * Will return an error if the channel is out of bounds.
+    */
     std::optional<grpl::expected<double, GrappleError>> get_channel_current(uint8_t channel) const;
+
+    /**
+     * Get the enabled state of a channel at this point in time.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return std::optional::nullopt if the MitoCANdria is not yet available on the bus.
+     * Will return an error if the channel is out of bounds.
+    */
     std::optional<grpl::expected<bool, GrappleError>> get_channel_enabled(uint8_t channel) const;
+
+    /**
+     * Get the voltage of a channel, in Volts, at this point in time.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return std::optional::nullopt if the MitoCANdria is not yet available on the bus.
+     * Will return an error if the channel is out of bounds.
+    */
     std::optional<grpl::expected<double, GrappleError>> get_channel_voltage(uint8_t channel) const;
+
+    /**
+     * Get the voltage setpoint of a channel, in Volts, at this point in time.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return std::optional::nullopt if the MitoCANdria is not yet available on the bus.
+     * Will return an error if the channel is out of bounds.
+    */
     std::optional<grpl::expected<double, GrappleError>> get_channel_voltage_setpoint(uint8_t channel) const;
 
+    /**
+     * Set the enabled state of a channel, where true is energised and false is deenergised.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return an error if the channel is out of bounds, or the MitoCANdria could not be configured.
+     */
     grpl::expected<grpl::empty, GrappleError> set_channel_enabled(uint8_t channel, bool enabled);
+
+    /**
+     * Set the voltage of a channel. This will also disable the channel as a safety precaution, requiring
+     * set_channel_enabled to be called.
+     * Note: only the adjustable channel can be targetted by this method.
+     * Channel must be one of grpl::MITOCANDRIA_CHANNEL_*.
+     * Will return an error if the channel is out of bounds, or the MitoCANdria could not be configured.
+     */
     grpl::expected<grpl::empty, GrappleError> set_channel_voltage(uint8_t channel, double voltage);
 
   private:
