@@ -1,0 +1,58 @@
+[tool.robotpy-build.metadata]
+name = "libgrapplefrc-py"
+description = "libgrapplefrc for RobotPy"
+author = "Jaci Brunning"
+author_email = "jaci.brunning@gmail.com"
+url = "https://github.com/GrappleRobotics/libgrapplefrc"
+license = "BSD-3-Clause"
+install_requires = [
+    "wpilib~=2025.0.0b1",
+]
+
+[build-system]
+requires = [
+    "robotpy-build<2025.0.0b1,~=2025.0.0a1",
+    "wpilib~=2025.0.0b1",
+]
+
+[tool.robotpy-build]
+base_package = "libgrapplefrc"
+
+[tool.robotpy-build.static_libs."libgrapplefrc-driver".maven_lib_download]
+artifact_id = "libgrapplefrcdriver"
+group_id = "au.grapplerobotics"
+repo_url = "file:///C:/Users/jacib/Documents/Grapple/libgrapplefrc/grapplefrcdriver/target/zips"
+version = "2024.3.1"
+libs = ["grapplefrcdriver"]
+
+[tool.robotpy-build.static_libs."libgrapplefrc-cpp".maven_lib_download]
+artifact_id = "libgrapplefrccpp"
+group_id = "au.grapplerobotics"
+repo_url = "file:///C:/Users/jacib/Documents/Grapple/libgrapplefrc/build/maven"
+version = "2024.3.1"
+libs = ["grapplefrc"]
+
+[tool.robotpy-build.wrappers."libgrapplefrc"]
+name = "libgrapplefrc"
+sources = [
+    "libgrapplefrc/libgrapplefrc.cpp"
+]
+
+depends = [
+    "wpilibc",
+    "wpilib_core",
+    "wpimath_cpp",
+    "wpiHal",
+    "wpiutil",
+    "libgrapplefrc-driver",
+    "libgrapplefrc-cpp",
+]
+
+generation_data = "gen"
+
+[tool.robotpy-build.wrappers."libgrapplefrc".autogen_headers]
+CanBridge = "grpl/CanBridge.h"
+LaserCan = "grpl/LaserCan.h"
+MitoCANdria = "grpl/MitoCANdria.h"
+libgrapplefrcffi = "libgrapplefrcffi.h"
+# utils = "grpl/utils.h"

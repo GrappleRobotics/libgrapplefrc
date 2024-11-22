@@ -95,6 +95,7 @@ def build(platform):
   if "windows" in platform:
     files = {
       'shared': { 'grapplefrcdriver.dll': 'grapplefrcdriver.dll', 'grapplefrcdriver.dll.lib': 'grapplefrcdriver.lib', 'grapplefrcdriver.pdb': 'grapplefrcdriver.pdb' },
+      'static': { 'grapplefrcdriver.lib': 'grapplefrcdriver.lib' }
     }
   elif "osx" in platform:
     files = {

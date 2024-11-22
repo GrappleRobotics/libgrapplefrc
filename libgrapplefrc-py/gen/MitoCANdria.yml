@@ -1,0 +1,11 @@
+---
+
+classes:
+  MitoCANdria:
+    methods:
+      get_channel_current:
+      get_channel_enabled:
+      get_channel_voltage:
+      get_channel_voltage_setpoint:
+      set_channel_enabled:
+      set_channel_voltage:
