@@ -1,6 +1,8 @@
 package au.grapplerobotics;
 
+import edu.wpi.first.util.RuntimeLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.IOException;
 import java.lang.ref.Cleaner;
 
 public class GrappleJNI {
@@ -23,11 +25,8 @@ public class GrappleJNI {
   static {
     if (Helper.getExtractOnStaticLoad()) {
       try {
-        System.loadLibrary("grapplefrcdriver");
-        // // RuntimeLoader.loadLibrary("grapplefrcdriver");
-        // loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
-        // loader.loadLibrary();
-      } catch (UnsatisfiedLinkError ex) {
+        RuntimeLoader.loadLibrary("grapplefrcdriver");
+      } catch (IOException ex) {
         ex.printStackTrace();
         System.exit(1);
       }
@@ -43,8 +42,6 @@ public class GrappleJNI {
     if (libraryLoaded) {
       return;
     }
-    // loader = new RuntimeLoader<>("grapplefrcdriver", RuntimeLoader.getDefaultExtractionRoot(), GrappleJNI.class);
-    // loader.loadLibrary();
     System.loadLibrary("grapplefrcdriver");
     libraryLoaded = true;
   }
