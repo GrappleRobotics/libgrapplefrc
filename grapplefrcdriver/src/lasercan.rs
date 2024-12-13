@@ -5,6 +5,12 @@ use grapple_frc_msgs::{grapple::{Request, errors::{GrappleResult, GrappleError},
 
 use crate::can::GrappleCanDriver;
 
+#[cfg(feature = "pyo3")]
+use pyo3::prelude::*;
+#[cfg(feature = "pyo3")]
+use grapple_frc_msgs::grapple::errors::{convert_grpl_result_to_py, convert_optional_grpl_result_to_py, GrappleResultPy};
+
+#[cfg_attr(feature = "pyo3", pyclass)]
 pub struct LaserCAN {
   driver: GrappleCanDriver,
   last_status_frame: Option<(Instant, LaserCanMeasurement)>,
@@ -61,6 +67,35 @@ impl LaserCAN {
     decode(self.driver.request(encode(mode), 500)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
+  }
+}
+
+#[cfg(feature = "pyo3")]
+#[cfg_attr(feature = "pyo3", pymethods)]
+impl LaserCAN {
+  #[new]
+  pub fn new_py(can_id: u8) -> Self {
+    return Self::new(can_id);
+  }
+  
+  #[pyo3(name = "get_measurement")]
+  fn get_measurement_py(&mut self) -> Option<LaserCanMeasurement> {
+    return self.get_measurement()
+  }
+
+  #[pyo3(name = "set_timing_budget")]
+  fn set_timing_budget_py(&mut self, budget: LaserCanTimingBudget, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_timing_budget(budget))
+  }
+
+  #[pyo3(name = "set_roi")]
+  fn set_roi_py(&mut self, roi: LaserCanRoi, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_roi(roi))
+  }
+
+  #[pyo3(name = "set_range")]
+  fn set_range_py(&mut self, mode: LaserCanRangingMode, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_range(mode))
   }
 }
 
