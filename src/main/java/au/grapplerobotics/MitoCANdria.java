@@ -1,6 +1,5 @@
 package au.grapplerobotics;
 
-import java.io.IOException;
 import java.lang.AutoCloseable;
 import java.lang.ref.Cleaner;
 
@@ -45,7 +44,7 @@ public class MitoCANdria implements AutoCloseable {
   public MitoCANdria(int can_id) {
     try {
       GrappleJNI.forceLoad();
-    } catch (IOException e) {
+    } catch (UnsatisfiedLinkError e) {
       e.printStackTrace();
       System.exit(1);
     }

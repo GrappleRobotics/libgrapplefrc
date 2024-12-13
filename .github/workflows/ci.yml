@@ -70,7 +70,7 @@ jobs:
             architecture: x64
             platform: windowsx86-64
             build-options: ""
-          - os: macos-12
+          - os: macos-13
             artifact-name: macOS
             architecture: x64
             platform: osxuniversal

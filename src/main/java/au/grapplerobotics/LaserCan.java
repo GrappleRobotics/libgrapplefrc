@@ -1,6 +1,5 @@
 package au.grapplerobotics;
 
-import java.io.IOException;
 import java.lang.AutoCloseable;
 import java.lang.ref.Cleaner;
 
@@ -167,7 +166,7 @@ public class LaserCan implements AutoCloseable {
   public LaserCan(int can_id) {
     try {
       GrappleJNI.forceLoad();
-    } catch (IOException e) {
+    } catch (UnsatisfiedLinkError e) {
       e.printStackTrace();
       System.exit(1);
     }
