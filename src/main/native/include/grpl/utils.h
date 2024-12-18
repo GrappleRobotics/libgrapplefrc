@@ -4,13 +4,13 @@
 #include <variant>
 
 #include <frc/Errors.h>
+#include <wpi/expected>
 
-#include "tl/expected.h"
 #include "libgrapplefrcffi.h"
 
 namespace grpl {
-  using tl::expected;
-  using tl::unexpected;
+  using wpi::expected;
+  using wpi::unexpected;
 
   using empty = libgrapplefrc::ffi::Empty;
 
