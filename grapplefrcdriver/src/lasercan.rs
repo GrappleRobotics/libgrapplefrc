@@ -8,7 +8,7 @@ use crate::can::GrappleCanDriver;
 #[cfg(feature = "pyo3")]
 use pyo3::prelude::*;
 #[cfg(feature = "pyo3")]
-use grapple_frc_msgs::grapple::errors::{convert_grpl_result_to_py, convert_optional_grpl_result_to_py, GrappleResultPy};
+use grapple_frc_msgs::grapple::errors::{convert_grpl_result_to_py, GrappleResultPy};
 
 #[cfg_attr(feature = "pyo3", pyclass)]
 pub struct LaserCAN {
