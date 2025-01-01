@@ -44,7 +44,7 @@ jobs:
       - name: Setup Rust Toolchain (Arm64)
         run: rustup target add aarch64-unknown-linux-gnu
       - name: Install Clang & Python
-        run: apt-get update && apt-get install -y libclang1-15 clang llvm gcc-multilib python3.11
+        run: apt-get update && apt-get install -y libclang1-15 clang llvm gcc-multilib
       - name: Prepare Rust Libs
         run: ./gradlew updateRustLibs --max-workers 1 ${{ matrix.build-options }}
       - name: Build Rust
@@ -52,7 +52,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
       - name: Build Python
-        run: cd libgrapplefrc-py && python3 -m venv .env && python3 build.py ${{ matrix.platform }}
+        run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -114,7 +114,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
       - name: Build Python
-        run: cd libgrapplefrc-py && python -m venv .env && python3 build.py ${{ matrix.platform }}
+        run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
