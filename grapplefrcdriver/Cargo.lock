@@ -565,9 +565,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "grapple-frc-msgs"
-version = "2025.0.2"
+version = "2025.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66f80cefec926781449077bbd9e856307550447d2228407178b458c6928d58d3"
+checksum = "1ba0db2c515dfa87906af9aa4bc401ee903f5c9127839ebb9d57037d150a9b51"
 dependencies = [
  "anyhow",
  "binmarshal",
