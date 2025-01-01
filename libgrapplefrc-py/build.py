@@ -18,7 +18,7 @@ def run(*cmd):
 TRIPLE_LOOKUP = {
   ("linuxathena"): {
     'triple': "arm-unknown-linux-gnueabi",
-    'python': 'python3.11'
+    'python': 'python3.10'
   },
   ("windowsx86-64"): {
     'triple': "x86_64-pc-windows-msvc",
@@ -30,19 +30,19 @@ TRIPLE_LOOKUP = {
   },
   ("osxuniversal"): {
     'triple': "x86_64-apple-darwin",
-    'python': 'python3.11'
+    'python': 'python3.10'
   },
   ("linuxx86-64"): {
     'triple': "x86_64-unknown-linux-gnu",
-    'python': 'python3.11'
+    'python': 'python3.10'
   },
   ("linuxarm64"): {
     'triple': "aarch64-unknown-linux-gnu",
-    'python': 'python3.11'
+    'python': 'python3.10'
   },
   ("linuxarm32"): {
     'triple': "arm-unknown-linux-gnueabihf",
-    'python': 'python3.11'
+    'python': 'python3.10'
   }
 }
 
