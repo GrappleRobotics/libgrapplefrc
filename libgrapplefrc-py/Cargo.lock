@@ -982,7 +982,7 @@ checksum = "5aaeb2981e0606ca11d79718f8bb01164f1d6ed75080182d3abf017e6d244b6d"
 
 [[package]]
 name = "libgrapplefrc-py"
-version = "0.1.0"
+version = "2025.0.0"
 dependencies = [
  "grapplefrcdriver",
  "pyo3",
