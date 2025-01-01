@@ -52,7 +52,7 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
       - name: Build Python
-        run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
+        run: cd libgrapplefrc-py && pip install maturin[patchelf] && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -113,7 +113,7 @@ jobs:
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
         run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
-      - name: Build Python
+      - name: Build Python (Windows, Mac)
         run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
