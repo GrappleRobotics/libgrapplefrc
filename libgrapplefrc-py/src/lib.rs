@@ -7,6 +7,20 @@ pub use grapplefrcdriver::lasercan::LaserCAN;
 #[allow(dead_code)]
 pub use grapplefrcdriver::mitocandria::MitoCANdria;
 
+#[pyfunction]
+pub fn can_bridge_tcp() {
+  grapplefrcdriver::can_bridge::start_can_bridge_c();
+}
+
+#[pymodule]
+pub fn libgrapplefrc(m: &Bound<'_, PyModule>) -> PyResult<()> {
+  m.add_function(wrap_pyfunction!(can_bridge_tcp, m)?)?;
+  m.add_class::<LaserCAN>()?;
+  m.add_class::<MitoCANdria>()?;
+
+  Ok(())
+}
+
 // /// Formats the sum of two numbers as string.
 // #[pyfunction]
 // fn sum_as_string(a: usize, b: usize) -> PyResult<String> {

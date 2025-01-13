@@ -103,3 +103,18 @@ fn start_can_bridge() -> anyhow::Result<()> {
 pub extern "C" fn start_can_bridge_c() {
   start_can_bridge().unwrap()
 }
+
+#[cfg(feature = "jni")]
+mod jni {
+  use jni::{objects::JClass, JNIEnv};
+
+  use super::start_can_bridge;
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_CanBridge_runTCP<'local>(
+    mut _env: JNIEnv<'local>,
+    _class: JClass<'local>
+  ) {
+    start_can_bridge().unwrap()
+  }
+}
