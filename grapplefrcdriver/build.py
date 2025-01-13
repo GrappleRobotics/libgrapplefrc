@@ -3,7 +3,7 @@ import subprocess
 import sys
 import zipfile
 
-NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2024/roborio/bin")
+NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2025/roborio/bin")
 
 # TODO: Load from cargo metadata
 VERSION = "2025.0.0"

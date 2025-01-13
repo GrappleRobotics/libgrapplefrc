@@ -4,7 +4,7 @@ import sys
 
 # Note: you must run python -m venv .env first!
 
-NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2024/roborio/bin")
+NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2025/roborio/bin")
 
 # TODO: Load from cargo metadata
 VERSION = "2025.0.0"
