@@ -50,21 +50,21 @@ impl LaserCAN {
 
   fn set_timing_budget(&mut self, budget: LaserCanTimingBudget) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetTimingBudget(data)));
-    decode(self.driver.request(encode(budget), 500)?)
+    decode(self.driver.request(encode(budget), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
 
   fn set_roi(&mut self, roi: LaserCanRoi) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRoi(data)));
-    decode(self.driver.request(encode(roi), 500)?)
+    decode(self.driver.request(encode(roi), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
 
   fn set_range(&mut self, mode: LaserCanRangingMode) -> GrappleResult<'static, ()> {
     let (encode, decode) = request_factory!(data, GrappleDeviceMessage::DistanceSensor(LaserCanMessage::SetRange(data)));
-    decode(self.driver.request(encode(mode), 500)?)
+    decode(self.driver.request(encode(mode), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }

@@ -9,7 +9,7 @@ pub use grapplefrcdriver::mitocandria::MitoCANdria;
 
 #[pyfunction]
 pub fn can_bridge_tcp() {
-  grapplefrcdriver::can_bridge::start_can_bridge_c();
+  grapplefrcdriver::can_bridge::start_can_bridge_c(true);
 }
 
 #[pymodule]

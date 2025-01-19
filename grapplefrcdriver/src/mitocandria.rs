@@ -54,7 +54,7 @@ impl MitoCANdria {
         mitocandria::MitocandriaChannelRequest::SetSwitchableChannel(data)
       )
     ));
-    decode(self.driver.request(encode(req), 500)?)
+    decode(self.driver.request(encode(req), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
@@ -65,7 +65,7 @@ impl MitoCANdria {
         mitocandria::MitocandriaChannelRequest::SetAdjustableChannel(data)
       )
     ));
-    decode(self.driver.request(encode(req), 500)?)
+    decode(self.driver.request(encode(req), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
