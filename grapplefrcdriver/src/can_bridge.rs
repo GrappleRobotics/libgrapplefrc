@@ -106,6 +106,13 @@ pub extern "C" fn start_can_bridge_c(forever: bool) {
   start_can_bridge(forever).unwrap()
 }
 
+#[no_mangle]
+pub extern "C" fn start_can_bridge_c_background() {
+  std::thread::spawn(move || {
+    start_can_bridge(true).unwrap()
+  });
+}
+
 #[cfg(feature = "jni")]
 mod jni {
   use jni::{objects::JClass, JNIEnv};
@@ -113,10 +120,12 @@ mod jni {
   use super::start_can_bridge;
 
   #[no_mangle]
-  pub extern "system" fn Java_au_grapplerobotics_CanBridge_runTCP<'local>(
+  pub extern "system" fn Java_au_grapplerobotics_CanBridge_runTCPNow<'local>(
     mut _env: JNIEnv<'local>,
     _class: JClass<'local>
   ) {
-    start_can_bridge(true).unwrap()
+    std::thread::spawn(move || {
+      start_can_bridge(true).unwrap()
+    });
   }
 }
