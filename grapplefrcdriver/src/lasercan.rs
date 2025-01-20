@@ -185,7 +185,7 @@ use super::LaserCAN;
   }
 
   #[no_mangle]
-  pub extern "system" fn Java_au_grapplerobotics_LaserCan_getMeasurement<'local>(
+  pub extern "system" fn Java_au_grapplerobotics_LaserCan_getMeasurementInternal<'local>(
     mut env: JNIEnv<'local>,
     inst: JObject<'local>,
   ) -> jobject {
