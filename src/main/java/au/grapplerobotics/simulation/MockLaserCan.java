@@ -9,18 +9,12 @@ import au.grapplerobotics.ConfigurationFailedException;
 */
 public class MockLaserCan implements LaserCanInterface {
   private Measurement _measurement;
-  private RangingMode _rangingMode;
-  private TimingBudget _timingBudget;
-  private RegionOfInterest _roi;
 
   /**
    * Create a new (mock) LaserCAN sensor. 
   */
   public MockLaserCan() {
-    _measurement = null;
-    _rangingMode = RangingMode.SHORT;
-    _timingBudget = TimingBudget.TIMING_BUDGET_20MS;
-    _roi = new RegionOfInterest(0, 0, 16, 16);
+    _measurement = new Measurement(0, 0, 0, false, TimingBudget.TIMING_BUDGET_20MS.asMilliseconds(), new RegionOfInterest(0, 0, 16, 16));
   }
 
   @Override
@@ -30,17 +24,17 @@ public class MockLaserCan implements LaserCanInterface {
 
   @Override
   public void setRangingMode(RangingMode mode) throws ConfigurationFailedException {
-    _rangingMode = mode;
+    _measurement.is_long = mode == RangingMode.LONG;
   }
 
   @Override
   public void setTimingBudget(TimingBudget budget) throws ConfigurationFailedException {
-    _timingBudget = budget;
+    _measurement.budget_ms = budget.asMilliseconds();
   }
 
   @Override
   public void setRegionOfInterest(RegionOfInterest roi) throws ConfigurationFailedException {
-    _roi = roi;
+    _measurement.roi = roi;
   }
 
   /**
@@ -55,6 +49,8 @@ public class MockLaserCan implements LaserCanInterface {
    * will be set automatically) in simulation mode
    */
   public void setMeasurementPartialSim(int status, int distance_mm, int ambient) {
-    _measurement = new Measurement(status, distance_mm, ambient, _rangingMode == RangingMode.LONG, _timingBudget.asMilliseconds(), _roi);
+    _measurement.status = status;
+    _measurement.distance_mm = distance_mm;
+    _measurement.ambient = ambient;
   }
 }

@@ -64,11 +64,33 @@ namespace grpl {
   */
   using LaserCanTimingBudget = libgrapplefrc::ffi::LaserCanTimingBudget;
 
+  class LaserCanInterface {
+    /**
+     * Get the most recent measurement from the sensor, if available.
+    */
+    virtual std::optional<LaserCanMeasurement> get_measurement() const = 0;
+
+    /**
+     * Set the ranging mode for the sensor. \see libgrapplefrc::LaserCanRangingMode
+    */
+    virtual grpl::expected<grpl::empty, GrappleError> set_ranging_mode(LaserCanRangingMode mode) = 0;
+
+    /**
+     * Set the timing budget for the sensor. \see libgrapplefrc::LaserCanTimingBudget
+    */
+    virtual grpl::expected<grpl::empty, GrappleError> set_timing_budget(LaserCanTimingBudget budget) = 0;
+
+    /**
+     * Set the region of interest for the sensor. \see libgrapplefrc::LaserCanROI
+    */
+    virtual grpl::expected<grpl::empty, GrappleError> set_roi(LaserCanROI roi) = 0;
+  };
+
   /**
    * Class for the Grapple Robotics LaserCAN sensor. The LaserCAN is a 0-4m laser ranging 
    * sensor addressable over the CAN bus. 
   */
-  class LaserCan {
+  class LaserCan : public LaserCanInterface {
   public:
     /**
      * Create a new LaserCAN sensor. 
@@ -79,28 +101,55 @@ namespace grpl {
     LaserCan(uint8_t can_id);
     ~LaserCan();
 
-    /**
-     * Get the most recent measurement from the sensor, if available.
-    */
     std::optional<LaserCanMeasurement> get_measurement() const;
-
-    /**
-     * Set the ranging mode for the sensor. \see libgrapplefrc::LaserCanRangingMode
-    */
     grpl::expected<grpl::empty, GrappleError> set_ranging_mode(LaserCanRangingMode mode);
-
-    /**
-     * Set the timing budget for the sensor. \see libgrapplefrc::LaserCanTimingBudget
-    */
     grpl::expected<grpl::empty, GrappleError> set_timing_budget(LaserCanTimingBudget budget);
-
-    /**
-     * Set the region of interest for the sensor. \see libgrapplefrc::LaserCanROI
-    */
     grpl::expected<grpl::empty, GrappleError> set_roi(LaserCanROI roi);
 
   private:
     uint8_t _can_id;
     libgrapplefrc::ffi::LaserCAN *_handle;
+  };
+
+  /**
+   * Class for the Grapple Robotics LaserCAN sensor in a simulation environment.
+   * The LaserCAN is a 0-4m laser ranging sensor addressable over the CAN bus. 
+  */
+  class MockLaserCan : public LaserCanInterface {
+   public:
+    MockLaserCan() {}
+    ~MockLaserCan() {}
+
+    std::optional<LaserCanMeasurement> get_measurement() const {
+      return _measurement;
+    }
+
+    grpl::expected<grpl::empty, GrappleError> set_ranging_mode(LaserCanRangingMode mode) {
+      _measurement.value().mode = mode;
+      return grpl::empty { 0 };
+    }
+
+    grpl::expected<grpl::empty, GrappleError> set_timing_budget(LaserCanTimingBudget budget) {
+      _measurement.value().budget = budget;
+      return grpl::empty { 0 };
+    }
+
+    grpl::expected<grpl::empty, GrappleError> set_roi(LaserCanROI roi) {
+      _measurement.value().roi = roi;
+      return grpl::empty { 0 };
+    }
+
+    void setMeasurementFullSim(LaserCanMeasurement measurement) {
+      _measurement = measurement;
+    }
+
+    void setMeasurementPartialSim(uint8_t status, uint16_t distance_mm, uint16_t ambient) {
+      _measurement.value().status = status;
+      _measurement.value().distance_mm = distance_mm;
+      _measurement.value().ambient = ambient;
+    }
+
+   private:
+    std::optional<LaserCanMeasurement> _measurement = LaserCanMeasurement {0, 0, 0, LaserCanRangingMode::Short, LaserCanTimingBudget::TB20ms, {0, 0, 16, 16} };
   };
 }
