@@ -203,8 +203,8 @@ use super::LaserCAN;
           JValueGen::Int(status.roi.h.0 as jint),
         ]).unwrap();
 
-        let cls = env.find_class("au/grapplerobotics/interface/LaserCanInterface$Measurement").unwrap();
-        env.new_object(cls, "(IIIZILau/grapplerobotics/interface/LaserCanInterface$RegionOfInterest;)V", &[
+        let cls = env.find_class("au/grapplerobotics/interfaces/LaserCanInterface$Measurement").unwrap();
+        env.new_object(cls, "(IIIZILau/grapplerobotics/interfaces/LaserCanInterface$RegionOfInterest;)V", &[
           JValueGen::Int(status.status as jint),
           JValueGen::Int(status.distance_mm as jint),
           JValueGen::Int(status.ambient as jint),
