@@ -195,7 +195,7 @@ use super::LaserCAN;
     match status {
       None => JObject::null().into_raw(),
       Some(status) => {
-        let cls = env.find_class("au/grapplerobotics/LaserCan$RegionOfInterest").unwrap();
+        let cls = env.find_class("au/grapplerobotics/interfaces/LaserCanInterface$RegionOfInterest").unwrap();
         let roi = env.new_object(cls, "(IIII)V", &[
           JValueGen::Int(status.roi.x.0 as jint),
           JValueGen::Int(status.roi.y.0 as jint),
@@ -203,8 +203,8 @@ use super::LaserCAN;
           JValueGen::Int(status.roi.h.0 as jint),
         ]).unwrap();
 
-        let cls = env.find_class("au/grapplerobotics/LaserCan$Measurement").unwrap();
-        env.new_object(cls, "(IIIZILau/grapplerobotics/LaserCan$RegionOfInterest;)V", &[
+        let cls = env.find_class("au/grapplerobotics/interface/LaserCanInterface$Measurement").unwrap();
+        env.new_object(cls, "(IIIZILau/grapplerobotics/interface/LaserCanInterface$RegionOfInterest;)V", &[
           JValueGen::Int(status.status as jint),
           JValueGen::Int(status.distance_mm as jint),
           JValueGen::Int(status.ambient as jint),
