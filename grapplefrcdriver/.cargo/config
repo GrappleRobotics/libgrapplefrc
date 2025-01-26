@@ -8,6 +8,5 @@ rustflags = [
 linker = "armv6-bookworm-linux-gnueabihf-gcc"
 ar = "armv6-bookworm-linux-gnueabihf-ar"
 [target.aarch64-unknown-linux-gnu]
-"aarch64-bullseye-linux-gnu-ar"
 linker = "aarch64-bookworm-linux-gnu-gcc"
 ar = "aarch64-bookworm-linux-gnu-ar"
