@@ -2,7 +2,7 @@ plugins {
   id 'cpp'
   id 'java'
   id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
-  id 'edu.wpi.first.NativeUtils' version '2024.7.0'
+  id 'edu.wpi.first.NativeUtils' version '2025.9.0'
   id 'edu.wpi.first.GradleJni' version '1.1.0'
   id 'edu.wpi.first.GradleVsCode' version '2.1.0'
 }
@@ -24,14 +24,14 @@ apply from: 'config.gradle'
 
 // Apply Java configuration
 dependencies {
-    implementation 'edu.wpi.first.cscore:cscore-java:2024.+'
-    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2024.+'
-    implementation 'edu.wpi.first.ntcore:ntcore-java:2024.+'
-    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2024.+'
-    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2024.+'
-    implementation 'edu.wpi.first.wpimath:wpimath-java:2024.+'
-    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2024.+'
-    implementation 'edu.wpi.first.hal:hal-java:2024.+'
+    implementation 'edu.wpi.first.cscore:cscore-java:2025.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2025.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2025.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2025.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2025.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2025.+'
+    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2025.+'
+    implementation 'edu.wpi.first.hal:hal-java:2025.+'
     implementation "org.ejml:ejml-simple:0.43.1"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.12.4"
     implementation "com.fasterxml.jackson.core:jackson-core:2.12.4"
@@ -49,7 +49,7 @@ nativeUtils {
 
   nativeDependencyContainer {
     libgrapplefrcdriver(getNativeDependencyTypeClass('WPISharedMavenDependency')) {
-      version = "2024.3.1"
+      version = "2025.0.8"
       groupId = "au.grapplerobotics"
       artifactId = "libgrapplefrcdriver"
       ext = "zip"
@@ -183,5 +183,5 @@ task updateRustLibs() {
 apply from: 'publish.gradle'
 
 wrapper {
-  gradleVersion '8.5'
+  gradleVersion '8.11'
 }

@@ -84,7 +84,7 @@ fn handle_client(session_handle: u32, mut stream: TcpStream) -> anyhow::Result<(
   }
 }
 
-fn start_can_bridge() -> anyhow::Result<()> {
+fn start_can_bridge(forever: bool) -> anyhow::Result<()> {
   let server = TcpListener::bind("172.22.11.2:8006")?;
 
   for stream in server.incoming() {
@@ -93,13 +93,39 @@ fn start_can_bridge() -> anyhow::Result<()> {
     hal_safe_call!(HAL_CAN_OpenStreamSession(&mut session_handle as *mut u32, 0u32, 0u32, 1024))?;
     let result = handle_client(session_handle, stream?);
     unsafe { HAL_CAN_CloseStreamSession(session_handle) };
-    return result;
+    if !forever {
+      return result;
+    }
   }
 
   Ok(())
 }
 
 #[no_mangle]
-pub extern "C" fn start_can_bridge_c() {
-  start_can_bridge().unwrap()
+pub extern "C" fn start_can_bridge_c(forever: bool) {
+  start_can_bridge(forever).unwrap()
+}
+
+#[no_mangle]
+pub extern "C" fn start_can_bridge_c_background() {
+  std::thread::spawn(move || {
+    start_can_bridge(true).unwrap()
+  });
+}
+
+#[cfg(feature = "jni")]
+mod jni {
+  use jni::{objects::JClass, JNIEnv};
+
+  use super::start_can_bridge;
+
+  #[no_mangle]
+  pub extern "system" fn Java_au_grapplerobotics_CanBridge_runTCPNow<'local>(
+    mut _env: JNIEnv<'local>,
+    _class: JClass<'local>
+  ) {
+    std::thread::spawn(move || {
+      start_can_bridge(true).unwrap()
+    });
+  }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "grapplefrcdriver"
-version = "2024.3.1"
+version = "2025.0.8"
 edition = "2021"
 
 include = [
@@ -16,20 +16,22 @@ name = "grapplefrcdriver"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [features]
-default = ["c", "jni", "simulation"]
+default = ["c", "jni"]
 c = []
 jni = []
-simulation = ["dep:grapple-lasercan"]
+# simulation = ["dep:grapple-lasercan"]
+pyo3 = ["dep:pyo3", "grapple-frc-msgs/pyo3"]
 
 [dependencies]
 anyhow = "1.0.75"
 bounded-static = "0.7.0"
 futures = "0.3.30"
-grapple-frc-msgs = "~2024.4.0"
-grapple-lasercan = { version = "~2024.2.0", optional = true }
+grapple-frc-msgs = "~2025.0.2"
+# grapple-lasercan = { version = "~2024.2.0", optional = true }
 jni = "0.21.1"
 tokio = { version = "1.38.0", features = ["macros", "rt"] }
 warp = "0.3.7"
+pyo3 = { version = "0.23.3", optional = true }
 
 [build-dependencies]
 cbindgen = "0.26.0"

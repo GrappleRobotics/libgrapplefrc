@@ -5,6 +5,12 @@ use grapple_frc_msgs::{binmarshal::AsymmetricCow, grapple::{errors::{GrappleErro
 
 use crate::can::GrappleCanDriver;
 
+#[cfg(feature = "pyo3")]
+use pyo3::prelude::*;
+#[cfg(feature = "pyo3")]
+use grapple_frc_msgs::grapple::errors::{convert_grpl_result_to_py, convert_optional_grpl_result_to_py, GrappleResultPy};
+
+#[cfg_attr(feature = "pyo3", pyclass)]
 pub struct MitoCANdria {
   driver: GrappleCanDriver,
   last_status_frame: Option<(Instant, mitocandria::MitocandriaStatusFrame)>
@@ -48,7 +54,7 @@ impl MitoCANdria {
         mitocandria::MitocandriaChannelRequest::SetSwitchableChannel(data)
       )
     ));
-    decode(self.driver.request(encode(req), 500)?)
+    decode(self.driver.request(encode(req), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
@@ -59,7 +65,7 @@ impl MitoCANdria {
         mitocandria::MitocandriaChannelRequest::SetAdjustableChannel(data)
       )
     ));
-    decode(self.driver.request(encode(req), 500)?)
+    decode(self.driver.request(encode(req), 200, 3)?)
       .map_err(|e| e.to_static())?.map_err(|e| e.to_static())?;
     Ok(())
   }
@@ -138,6 +144,60 @@ impl MitoCANdria {
       },
       None => Err(GrappleError::ParameterOutOfBounds(AsymmetricCow(Cow::Borrowed("Invalid channel!")))),
     }
+  }
+}
+
+#[cfg(feature = "pyo3")]
+#[cfg_attr(feature = "pyo3", pymethods)]
+impl MitoCANdria {
+  #[new]
+  pub fn new_py(can_id: u8) -> Self {
+    return Self::new(can_id);
+  }
+
+  #[pyo3(name = "get_status")]
+  pub fn get_status_py(&mut self) -> Option<mitocandria::MitocandriaStatusFrame> {
+    return self.get_status()
+  }
+
+  #[pyo3(name = "set_switchable")]
+  pub fn set_switchable_py(&mut self, req: MitocandriaSwitchableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_switchable(req))
+  }
+
+  #[pyo3(name = "set_adjustable")]
+  pub fn set_adjustable_py(&mut self, req: MitocandriaAdjustableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_adjustable(req))
+  }
+
+  #[pyo3(name = "get_current")]
+  pub fn get_current_py(&mut self, channel: u8, py: Python<'_>) -> PyResult<Option<GrappleResultPy>> {
+    convert_optional_grpl_result_to_py(py, self.get_current(channel))
+  }
+
+  #[pyo3(name = "get_voltage")]
+  pub fn get_voltage_py(&mut self, channel: u8, py: Python<'_>) -> PyResult<Option<GrappleResultPy>> {
+    convert_optional_grpl_result_to_py(py, self.get_voltage(channel))
+  }
+
+  #[pyo3(name = "get_voltage_setpoint")]
+  pub fn get_voltage_setpoint_py(&mut self, channel: u8, py: Python<'_>) -> PyResult<Option<GrappleResultPy>> {
+    convert_optional_grpl_result_to_py(py, self.get_voltage_setpoint(channel))
+  }
+
+  #[pyo3(name = "get_enabled")]
+  pub fn get_enabled_py(&mut self, channel: u8, py: Python<'_>) -> PyResult<Option<GrappleResultPy>> {
+    convert_optional_grpl_result_to_py(py, self.get_enabled(channel))
+  }
+
+  #[pyo3(name = "set_enabled")]
+  pub fn set_enabled_py(&mut self, channel: u8, enabled: bool, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_enabled(channel, enabled))
+  }
+
+  #[pyo3(name = "set_voltage")]
+  pub fn set_voltage_py(&mut self, channel: u8, voltage: f64, py: Python<'_>) -> PyResult<GrappleResultPy> {
+    convert_grpl_result_to_py(py, self.set_voltage(channel, voltage))
   }
 }
 

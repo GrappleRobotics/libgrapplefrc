@@ -8,15 +8,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/roborio-cross-ubuntu:2024-22.04
+          - container: wpilib/roborio-cross-ubuntu:2025-22.04
             artifact-name: Athena
             build-options: "-Ponlylinuxathena"
             platform: linuxathena
-          - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
+          - container: wpilib/raspbian-cross-ubuntu:bookworm-22.04
             artifact-name: Arm32
             build-options: "-Ponlylinuxarm32"
             platform: linuxarm32
-          - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
+          - container: wpilib/aarch64-cross-ubuntu:bookworm-22.04
             artifact-name: Arm64
             build-options: "-Ponlylinuxarm64"
             platform: linuxarm64
@@ -43,7 +43,7 @@ jobs:
         run: rustup target add arm-unknown-linux-gnueabihf
       - name: Setup Rust Toolchain (Arm64)
         run: rustup target add aarch64-unknown-linux-gnu
-      - name: Install Clang
+      - name: Install Clang & Python
         run: apt-get update && apt-get install -y libclang1-15 clang llvm gcc-multilib
       - name: Prepare Rust Libs
         run: ./gradlew updateRustLibs --max-workers 1 ${{ matrix.build-options }}
@@ -51,6 +51,8 @@ jobs:
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
         run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
+      - name: Build Python
+        run: cd libgrapplefrc-py && pip install maturin[patchelf] && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -59,6 +61,10 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}-Driver
           path: grapplefrcdriver/target/zips
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}-Python
+          path: libgrapplefrc-py/target/wheels
 
   build-host:
     strategy:
@@ -70,7 +76,7 @@ jobs:
             architecture: x64
             platform: windowsx86-64
             build-options: ""
-          - os: macos-12
+          - os: macos-13
             artifact-name: macOS
             architecture: x64
             platform: osxuniversal
@@ -107,6 +113,8 @@ jobs:
         run: cd grapplefrcdriver && python3 build.py ${{ matrix.platform }}
       - name: Build with Gradle
         run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
+      - name: Build Python (Windows, Mac)
+        run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.artifact-name }}
@@ -115,6 +123,10 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}-Driver
           path: grapplefrcdriver/target/zips
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}-Python
+          path: libgrapplefrc-py/target/wheels
 
   combine:
     name: Combine

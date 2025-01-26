@@ -3,10 +3,10 @@ import subprocess
 import sys
 import zipfile
 
-NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2024/roborio/bin")
+NEW_PATH = os.getenv("PATH") + ";" + os.path.expanduser("~/.gradle/toolchains/frc/2025/roborio/bin")
 
 # TODO: Load from cargo metadata
-VERSION = "2024.3.1"
+VERSION = "2025.0.8"
 
 def run(*cmd):
   env = os.environ.copy()
@@ -95,6 +95,7 @@ def build(platform):
   if "windows" in platform:
     files = {
       'shared': { 'grapplefrcdriver.dll': 'grapplefrcdriver.dll', 'grapplefrcdriver.dll.lib': 'grapplefrcdriver.lib', 'grapplefrcdriver.pdb': 'grapplefrcdriver.pdb' },
+      'static': { 'grapplefrcdriver.lib': 'grapplefrcdriver.lib' }
     }
   elif "osx" in platform:
     files = {

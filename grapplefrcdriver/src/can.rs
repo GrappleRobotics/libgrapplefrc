@@ -91,13 +91,7 @@ impl GrappleCanDriver {
     Ok(())
   }
 
-  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
-    let mut id = GrappleMessageId::new(self.can_id);
-    msg.update(&mut id);
-
-    let mut complement_id = id.clone();
-    complement_id.ack_flag = true;
-
+  fn request_inner(&mut self, msg: GrappleDeviceMessage, reply_id: GrappleMessageId, timeout_ms: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
     self.send(msg)?;
     let started = Instant::now();
 
@@ -105,7 +99,7 @@ impl GrappleCanDriver {
       let mut ret = None;
 
       self.spin(&mut |received_id, received_msg| {
-        if received_id == complement_id {
+        if received_id == reply_id {
           ret = Some(received_msg.into_static());
           false
         } else {
@@ -124,5 +118,19 @@ impl GrappleCanDriver {
     };
 
     Err(GrappleError::TimedOut(Cow::<str>::Borrowed("CAN Request Timed Out! Is your device plugged in and the firmware up to date?").into()))
+  }
+
+  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize, retry: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
+    let mut id = GrappleMessageId::new(self.can_id);
+    msg.update(&mut id);
+
+    let mut complement_id = id.clone();
+    complement_id.ack_flag = true;
+    
+    match self.request_inner(msg.clone(), complement_id, timeout_ms) {
+      Ok(x) => Ok(x.to_static()),
+      Err(_) if retry >= 1 => self.request(msg, timeout_ms, retry - 1),
+      Err(e) => Err(e)
+    }
   }
 }
