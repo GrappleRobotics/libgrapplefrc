@@ -53,15 +53,15 @@ jobs:
         run: ./gradlew -D maven.repo.local=/__w/libgrapplefrc/libgrapplefrc/build/maven publishToMavenLocal -PreleaseMode --max-workers 1 ${{ matrix.build-options }}
       - name: Build Python
         run: cd libgrapplefrc-py && pip install maturin[patchelf] && python3 build.py ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: /__w/libgrapplefrc/libgrapplefrc/build/maven
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-Driver
           path: grapplefrcdriver/target/zips
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-Python
           path: libgrapplefrc-py/target/wheels
@@ -115,15 +115,15 @@ jobs:
         run: ./gradlew publishToMavenLocal -PreleaseMode ${{ matrix.build-options }}
       - name: Build Python (Windows, Mac)
         run: cd libgrapplefrc-py && pip install maturin && python3 build.py ${{ matrix.platform }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: ~/.m2/repository
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-Driver
           path: grapplefrcdriver/target/zips
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-Python
           path: libgrapplefrc-py/target/wheels
@@ -136,12 +136,12 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: combiner/products/m2
       - name: Flatten Artifacts
         run: rsync -a --delete combiner/products/m2/*/* combiner/products/out/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: Maven
           path: combiner/products/out/
