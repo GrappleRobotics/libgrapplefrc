@@ -141,7 +141,7 @@ jobs:
         with:
           path: combiner/products/m2
       - name: Install rsync
-        run: apt-get update && apt-get install rsync
+        run: apt-get update && apt-get install -y rsync
       - name: Flatten Artifacts
         run: rsync -a --delete combiner/products/m2/*/* combiner/products/out/
       - uses: actions/upload-artifact@v4
