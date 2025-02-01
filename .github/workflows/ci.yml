@@ -132,6 +132,7 @@ jobs:
     name: Combine
     needs: [build-docker, build-host]
     runs-on: ubuntu-latest
+    container: python:3.12
     steps:
       - uses: actions/checkout@v3
         with:
