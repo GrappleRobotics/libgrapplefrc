@@ -174,9 +174,9 @@ jobs:
 
       - name: "Publish Python (desktop)"
         if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
-        run: cd libgrapplefrc-py && twine upload -u ${{ secrets.PYPI_TWINE_USER }} -p ${{ secrets.PYPI_TWINE_API_KEY }} ../combiner/products/out/*.whl --skip-existing
-        
+        run: cd libgrapplefrc-py && twine upload -u ${{ secrets.PYPI_TWINE_USER }} -p ${{ secrets.PYPI_TWINE_API_KEY }} ../combiner/products/out/desktop/*.whl --skip-existing
+
       - name: "Publish Python (roborio)"
         if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
-        run: cd libgrapplefrc-py && twine upload --repository-url https://wpilib.jfrog.io/artifactory/api/pypi/vendor-python-release-2025-local -u ${{ secrets.WPILIB_TWINE_USER }} -p ${{ secrets.WPILIB_TWINE_API_KEY }} ../combiner/products/out/*-linux_roborio.whl --skip-existing
+        run: cd libgrapplefrc-py && twine upload --repository-url https://wpilib.jfrog.io/artifactory/api/pypi/vendor-python-release-2025-local -u ${{ secrets.WPILIB_TWINE_USER }} -p ${{ secrets.WPILIB_TWINE_API_KEY }} ../combiner/products/out/athena/*-linux_roborio.whl --skip-existing
 

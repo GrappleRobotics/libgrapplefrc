@@ -56,11 +56,17 @@ def build(platform):
 
   run("maturin", "build", "--release", "--target={}".format(triple))
 
-  if triple == "arm-unknown-linux-gnueabi":
-    suffix = "linux_armv6l.whl"
-    fs = os.listdir("target/wheels")
-    for f in fs:
-      if f.endswith(suffix):
-        os.rename("target/wheels/" + f, "target/wheels/" + f[:-len(suffix)] + "linux_roborio.whl")
+  suffix = "linux_armv6l.whl"
+  
+  os.makedirs("target/wheels/desktop", exist_ok=True)
+  os.makedirs("target/wheels/athena", exist_ok=True)
+
+  fs = os.listdir("target/wheels")
+  for f in fs:
+    if f.endswith(".whl"):
+      if f.endswith(suffix) and platform == "linuxathena":
+        os.rename("target/wheels/" + f, "target/wheels/athena/" + f[:-len(suffix)] + "linux_roborio.whl")
+      else:
+        os.rename("target/wheels/" + f, "target/wheels/desktop/" + f)
 
 build(sys.argv[1])
