@@ -18,31 +18,31 @@ def run(*cmd):
 TRIPLE_LOOKUP = {
   ("linuxathena"): {
     'triple': "arm-unknown-linux-gnueabi",
-    'python': 'python3.10'
+    # 'python': 'python3.10'
   },
   ("windowsx86-64"): {
     'triple': "x86_64-pc-windows-msvc",
-    'python': 'python'  # Windows doesn't understand python3.11 when converting to a linkfile :(
+    # 'python': 'python'  # Windows doesn't understand python3.11 when converting to a linkfile :(
   },
   ("windowsarm64"): {
     'triple': "aarch64-pc-windows-msvc",
-    'python': 'python'
+    # 'python': 'python'
   },
   ("osxuniversal"): {
     'triple': "x86_64-apple-darwin",
-    'python': 'python3.10'
+    # 'python': 'python3.10'
   },
   ("linuxx86-64"): {
     'triple': "x86_64-unknown-linux-gnu",
-    'python': 'python3.10'
+    # 'python': 'python3.10'
   },
   ("linuxarm64"): {
     'triple': "aarch64-unknown-linux-gnu",
-    'python': 'python3.10'
+    # 'python': 'python3.10'
   },
   ("linuxarm32"): {
     'triple': "arm-unknown-linux-gnueabihf",
-    'python': 'python3.10'
+    # 'python': 'python3.10'
   }
 }
 
@@ -54,6 +54,13 @@ def build(platform):
     print("No Triple found for {}".format(platform), file=sys.stderr)
     exit(1)
 
-  run("maturin", "build", "--release", "--target={}".format(triple), "-i", details["python"])
+  run("maturin", "build", "--release", "--target={}".format(triple))
+
+  if triple == "arm-unknown-linux-gnueabi":
+    suffix = "linux_armv6l.whl"
+    fs = os.listdir("target/wheels")
+    for f in fs:
+      if f.endswith(suffix):
+        os.rename("target/wheels/" + f, "target/wheels/" + f[:-len(suffix)] + "linux_roborio.whl")
 
 build(sys.argv[1])

@@ -145,11 +145,13 @@ jobs:
         with:
           name: Maven
           path: combiner/products/out/
+
       - uses: 'google-github-actions/auth@v2'
         if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
         with:
           project_id: "grapple-frc"
           credentials_json: ${{ secrets.GCP_SVC_ACCT }}
+
       - uses: 'google-github-actions/upload-cloud-storage@v1'
         if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
         with:
@@ -162,3 +164,11 @@ jobs:
           path: "depjson"
           destination: "grapple-frc-maven"
           parent: false
+      
+      - name: "Publish Python (roborio)"
+        if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
+        run: twine upload --repository-url https://wpilib.jfrog.io/artifactory/api/pypi/vendor-python-release-2025-local -u ${{ secrets.WPILIB_TWINE_USER }} -p ${{ secrets.WPILIB_TWINE_API_KEY }} combiner/products/out/*-linux_roborio.whl --skip-existing
+
+      - name: "Publish Python (desktop)"
+        if: github.repository_owner == 'GrappleRobotics' && startsWith(github.ref, 'refs/tags/v')
+        run: twine upload -u ${{ secrets.PYPI_TWINE_USER }} -p ${{ secrets.PIPY_TWINE_API_KEY }} combiner/products/out/*.whl --skip-existing
