@@ -1,6 +1,6 @@
 [package]
 name = "grapplefrcdriver"
-version = "2025.0.8"
+version = "2025.1.0"
 edition = "2021"
 
 include = [
