@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "libgrapplefrc-py"
-license-files = { paths = ["LICENSE"] }
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 classifiers = [ ]
 dynamic = ["version"]
