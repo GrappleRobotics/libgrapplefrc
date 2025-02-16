@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use bounded_static::ToBoundedStatic as _;
-use grapple_frc_msgs::{grapple::{Request, errors::{GrappleResult, GrappleError}, lasercan::{LaserCanMessage, LaserCanRoi, LaserCanMeasurement, LaserCanTimingBudget, LaserCanRangingMode}, GrappleDeviceMessage, DEVICE_TYPE_DISTANCE_SENSOR}, request_factory};
+pub use grapple_frc_msgs::{grapple::{Request, errors::{GrappleResult, GrappleError}, lasercan::{LaserCanMessage, LaserCanRoi, LaserCanMeasurement, LaserCanTimingBudget, LaserCanRangingMode}, GrappleDeviceMessage, DEVICE_TYPE_DISTANCE_SENSOR}, request_factory};
 
 use crate::can::GrappleCanDriver;
 

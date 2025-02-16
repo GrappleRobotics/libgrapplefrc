@@ -1,7 +1,7 @@
 use std::{borrow::Cow, time::{Duration, Instant}};
 
 use bounded_static::ToBoundedStatic;
-use grapple_frc_msgs::{binmarshal::AsymmetricCow, grapple::{errors::{GrappleError, GrappleResult}, mitocandria::{self, MitocandriaAdjustableChannelRequest, MitocandriaChannelStatus, MitocandriaSwitchableChannelRequest}, GrappleDeviceMessage, Request, DEVICE_TYPE_POWER_DISTRIBUTION_MODULE}, request_factory};
+pub use grapple_frc_msgs::{binmarshal::AsymmetricCow, grapple::{errors::{GrappleError, GrappleResult}, mitocandria::{self, MitocandriaAdjustableChannelRequest, MitocandriaChannelStatus, MitocandriaSwitchableChannelRequest}, GrappleDeviceMessage, Request, DEVICE_TYPE_POWER_DISTRIBUTION_MODULE}, request_factory};
 
 use crate::can::GrappleCanDriver;
 
@@ -160,15 +160,15 @@ impl MitoCANdria {
     return self.get_status()
   }
 
-  #[pyo3(name = "set_switchable")]
-  pub fn set_switchable_py(&mut self, req: MitocandriaSwitchableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
-    convert_grpl_result_to_py(py, self.set_switchable(req))
-  }
+  // #[pyo3(name = "set_switchable")]
+  // pub fn set_switchable_py(&mut self, req: MitocandriaSwitchableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
+  //   convert_grpl_result_to_py(py, self.set_switchable(req))
+  // }
 
-  #[pyo3(name = "set_adjustable")]
-  pub fn set_adjustable_py(&mut self, req: MitocandriaAdjustableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
-    convert_grpl_result_to_py(py, self.set_adjustable(req))
-  }
+  // #[pyo3(name = "set_adjustable")]
+  // pub fn set_adjustable_py(&mut self, req: MitocandriaAdjustableChannelRequest, py: Python<'_>) -> PyResult<GrappleResultPy> {
+  //   convert_grpl_result_to_py(py, self.set_adjustable(req))
+  // }
 
   #[pyo3(name = "get_current")]
   pub fn get_current_py(&mut self, channel: u8, py: Python<'_>) -> PyResult<Option<GrappleResultPy>> {

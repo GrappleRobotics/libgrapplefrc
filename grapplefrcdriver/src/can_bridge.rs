@@ -85,7 +85,7 @@ fn handle_client(session_handle: u32, mut stream: TcpStream) -> anyhow::Result<(
 }
 
 fn start_can_bridge(forever: bool) -> anyhow::Result<()> {
-  let server = TcpListener::bind("172.22.11.2:8006")?;
+  let server = TcpListener::bind("0.0.0.0:8006")?;
 
   for stream in server.incoming() {
     // Only handle one client at a time, otherwise the process lives forever when GrappleHook is done.

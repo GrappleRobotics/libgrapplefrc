@@ -1,3 +1,5 @@
+use grapplefrcdriver::lasercan::{LaserCanMeasurement, LaserCanRangingMode, LaserCanRoi, LaserCanTimingBudget};
+
 #[allow(dead_code)]
 pub use pyo3::prelude::*;
 
@@ -16,6 +18,11 @@ pub fn can_bridge_tcp() {
 pub fn libgrapplefrc(m: &Bound<'_, PyModule>) -> PyResult<()> {
   m.add_function(wrap_pyfunction!(can_bridge_tcp, m)?)?;
   m.add_class::<LaserCAN>()?;
+  m.add_class::<LaserCanMeasurement>()?;
+  m.add_class::<LaserCanRoi>()?;
+  m.add_class::<LaserCanTimingBudget>()?;
+  m.add_class::<LaserCanRangingMode>()?;
+
   m.add_class::<MitoCANdria>()?;
 
   Ok(())
