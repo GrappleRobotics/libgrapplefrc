@@ -29,7 +29,7 @@ TRIPLE_LOOKUP = {
     # 'python': 'python'
   },
   ("osxuniversal"): {
-    'triple': "x86_64-apple-darwin",
+    'triple': "aarch64-apple-darwin",
     # 'python': 'python3.10'
   },
   ("linuxx86-64"): {
