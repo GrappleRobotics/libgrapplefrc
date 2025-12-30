@@ -1,8 +1,8 @@
 {
-    "fileName": "libgrapplefrc2025.json",
+    "fileName": "libgrapplefrc2026beta.json",
     "name": "libgrapplefrc",
     "version": "2026.0.0-beta1",
-    "frcYear": "2026",
+    "frcYear": "2026beta",
     "uuid": "8ef3423d-9532-4665-8339-206dae1d7168",
     "mavenUrls": [ "https://storage.googleapis.com/grapple-frc-maven" ],
     "jsonUrl": "https://storage.googleapis.com/grapple-frc-maven/libgrapplefrc2026.json",
