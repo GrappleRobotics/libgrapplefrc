@@ -1,8 +1,8 @@
 plugins {
   id 'cpp'
   id 'java'
-  id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
-  id 'edu.wpi.first.NativeUtils' version '2025.9.0'
+  id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2025.0'
+  id 'edu.wpi.first.NativeUtils' version '2026.0.1'
   id 'edu.wpi.first.GradleJni' version '1.1.0'
   id 'edu.wpi.first.GradleVsCode' version '2.1.0'
 }
@@ -24,19 +24,20 @@ apply from: 'config.gradle'
 
 // Apply Java configuration
 dependencies {
-    implementation 'edu.wpi.first.cscore:cscore-java:2025.+'
-    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2025.+'
-    implementation 'edu.wpi.first.ntcore:ntcore-java:2025.+'
-    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2025.+'
-    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2025.+'
-    implementation 'edu.wpi.first.wpimath:wpimath-java:2025.+'
-    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2025.+'
-    implementation 'edu.wpi.first.hal:hal-java:2025.+'
-    implementation "org.ejml:ejml-simple:0.43.1"
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.12.4"
-    implementation "com.fasterxml.jackson.core:jackson-core:2.12.4"
-    implementation "com.fasterxml.jackson.core:jackson-databind:2.12.4"
-    implementation 'edu.wpi.first.thirdparty.frc2024.opencv:opencv-java:4.8.0-2'
+    implementation 'edu.wpi.first.cscore:cscore-java:2026.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2026.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2026.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2026.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2026.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2026.+'
+    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2026.+'
+    implementation 'edu.wpi.first.hal:hal-java:2026.+'
+
+    implementation "org.ejml:ejml-simple:0.44.0"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.19.2"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.19.2"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.19.2"
+    implementation 'edu.wpi.first.thirdparty.frc2025.opencv:opencv-java:4.10.0-2'
 }
 
 // Set up exports properly
@@ -49,7 +50,7 @@ nativeUtils {
 
   nativeDependencyContainer {
     libgrapplefrcdriver(getNativeDependencyTypeClass('WPISharedMavenDependency')) {
-      version = "2025.1.3"
+      version = "2026.0.0-beta1"
       groupId = "au.grapplerobotics"
       artifactId = "libgrapplefrcdriver"
       ext = "zip"
@@ -183,5 +184,5 @@ task updateRustLibs() {
 apply from: 'publish.gradle'
 
 wrapper {
-  gradleVersion '8.11'
+  gradleVersion '8.14.3'
 }

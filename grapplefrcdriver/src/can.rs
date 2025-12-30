@@ -59,8 +59,8 @@ impl GrappleCanDriver {
             Ok(msg) => {
               let mut storage = Vec::with_capacity(128);
               match self.reassembler_rx.defragment(timestamp as i64, &this_message_id, msg, &mut storage) {
-                Ok(Some(m)) => {
-                  let cont = consumer(this_message_id.into(), m);
+                Ok(Some((mid, m))) => {
+                  let cont = consumer(mid, m);
                   if !cont {
                     break;
                   }
