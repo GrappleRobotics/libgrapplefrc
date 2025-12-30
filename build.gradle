@@ -155,26 +155,26 @@ task updateRustLibs() {
             }
           })
 
-          // if (targetPlatform.name == "osxuniversal") {
-          //   // 2nd copy needed for arm
-          //   outdir = project.file("grapplefrcdriver/buildlibs/aarch64-apple-darwin")
-          //   new File(outdir, "libs").mkdirs()
-          //   new File(outdir, "headers").mkdirs()
+          if (targetPlatform.name == "osxuniversal") {
+            // 2nd copy needed for x86-64
+            outdir = project.file("grapplefrcdriver/buildlibs/x86_64-apple-darwin")
+            new File(outdir, "libs").mkdirs()
+            new File(outdir, "headers").mkdirs()
 
-          //   libs.forEach({ lf ->
-          //     copy {
-          //       from lf
-          //       into "${outdir}/libs"
-          //     }
-          //   })
+            libs.forEach({ lf ->
+              copy {
+                from lf
+                into "${outdir}/libs"
+              }
+            })
 
-          //   headers.forEach({ hd ->
-          //     copy {
-          //       from hd
-          //       into "${outdir}/headers"
-          //     }
-          //   })
-          // }
+            headers.forEach({ hd ->
+              copy {
+                from hd
+                into "${outdir}/headers"
+              }
+            })
+          }
         }
       })
     }}
