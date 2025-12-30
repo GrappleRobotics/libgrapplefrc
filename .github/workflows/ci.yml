@@ -104,6 +104,9 @@ jobs:
       - name: Setup Rust Toolchain (macOS Arm64)
         run: rustup target add aarch64-apple-darwin
         if: matrix.artifact-name == 'macOS'
+      - name: Setup Rust Toolchain (macOS x86_64)
+        run: rustup target add x86_64-apple-darwin
+        if: matrix.artifact-name == 'macOS'
       - name: Setup Rust Toolchain (Windows Arm64)
         run: rustup target add aarch64-pc-windows-msvc
         if: matrix.artifact-name == 'WinArm64'
