@@ -28,7 +28,7 @@ TRIPLE_LOOKUP = {
     'path': 'windows/arm64'
   },
   ("osxuniversal"): {
-    'triple': "x86_64-apple-darwin",
+    'triple': "aarch64-apple-darwin",
     'path': 'osx/universal'
   },
   ("linuxx86-64"): {
@@ -58,8 +58,9 @@ def build(platform):
 
   # OSX builds universal by building both and then merging
   if platform == "osxuniversal":
-    run("cargo", "build", "--target=aarch64-apple-darwin")
-    run("cargo", "build", "--release", "--target=aarch64-apple-darwin")
+    # Removed support for Apple x86-64, no longer needed
+    # run("cargo", "build", "--target=aarch64-apple-darwin")
+    # run("cargo", "build", "--release", "--target=aarch64-apple-darwin")
 
     for mode in ["debug", "release"]:
       mode_dir = f"target/universal-apple-darwin/{mode}"
@@ -68,9 +69,9 @@ def build(platform):
       except FileExistsError:
         pass
       output_file = f"{mode_dir}/libgrapplefrcdriver.dylib"
-      intel_file = f"target/x86_64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
+      # intel_file = f"target/x86_64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
       arm_file = f"target/aarch64-apple-darwin/{mode}/libgrapplefrcdriver.dylib"
-      run("lipo", "-create", "-output", output_file, intel_file, arm_file)
+      run("lipo", "-create", "-output", output_file, arm_file)
       triple = "universal-apple-darwin"
 
   # Zip it up for maven

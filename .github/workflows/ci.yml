@@ -76,9 +76,9 @@ jobs:
             architecture: x64
             platform: windowsx86-64
             build-options: ""
-          - os: macos-13
+          - os: macos-14
             artifact-name: macOS
-            architecture: x64
+            architecture: aarch64
             platform: osxuniversal
             build-options: ""
           - os: windows-2022

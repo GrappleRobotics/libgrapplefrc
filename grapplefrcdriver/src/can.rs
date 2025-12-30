@@ -91,7 +91,7 @@ impl GrappleCanDriver {
     Ok(())
   }
 
-  fn request_inner(&mut self, msg: GrappleDeviceMessage, reply_id: GrappleMessageId, timeout_ms: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
+  fn request_inner(&mut self, msg: GrappleDeviceMessage, reply_id: GrappleMessageId, timeout_ms: usize) -> GrappleResult<'static, GrappleDeviceMessage<'static>> {
     self.send(msg)?;
     let started = Instant::now();
 
@@ -120,7 +120,7 @@ impl GrappleCanDriver {
     Err(GrappleError::TimedOut(Cow::<str>::Borrowed("CAN Request Timed Out! Is your device plugged in and the firmware up to date?").into()))
   }
 
-  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize, retry: usize) -> GrappleResult<'static, GrappleDeviceMessage> {
+  pub fn request(&mut self, mut msg: GrappleDeviceMessage, timeout_ms: usize, retry: usize) -> GrappleResult<'static, GrappleDeviceMessage<'static>> {
     let mut id = GrappleMessageId::new(self.can_id);
     msg.update(&mut id);
 
