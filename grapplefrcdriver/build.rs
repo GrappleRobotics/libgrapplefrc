@@ -5,6 +5,7 @@ const SYMBOL_REGEX: &str = r"(HAL_)\w+";
 
 use std::{env, path::PathBuf};
 use std::path::Path;
+use bindgen::CargoCallbacks;
 use cbindgen::{Config, Builder};
 
 fn main() {
@@ -33,11 +34,11 @@ fn main() {
     .header("HALWrapper.h")
     .derive_default(true)
     .clang_arg(format!("-Ibuildlibs/{}/headers", target))
-    .whitelist_type(SYMBOL_REGEX)
-    .whitelist_function(SYMBOL_REGEX)
-    .whitelist_var(SYMBOL_REGEX)
+    .allowlist_type(SYMBOL_REGEX)
+    .allowlist_function(SYMBOL_REGEX)
+    .allowlist_var(SYMBOL_REGEX)
     .default_enum_style(bindgen::EnumVariation::Rust { non_exhaustive: false })
-    .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+    .parse_callbacks(Box::new(CargoCallbacks::new()))
     .clang_args(&[
       format!("--target={}", target)    // See: https://github.com/rust-lang/rust-bindgen/issues/1760
     ])

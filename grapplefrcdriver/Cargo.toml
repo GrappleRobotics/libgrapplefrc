@@ -1,6 +1,6 @@
 [package]
 name = "grapplefrcdriver"
-version = "2026.0.0-beta1"
+version = "2026.0.0"
 edition = "2021"
 
 include = [
@@ -34,5 +34,5 @@ warp = "0.3.7"
 pyo3 = { version = "0.23.3", optional = true }
 
 [build-dependencies]
-cbindgen = "0.26.0"
-bindgen = "0.53.1"
+cbindgen = "0.29.2"
+bindgen = "0.72.1"
